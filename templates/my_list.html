@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Ma Sélection{% endblock %}
+
+{% block content %}
+<h1>Mes Recettes Sélectionnées</h1>
+<p>
+    <a href="{{ url_for('clear_list') }}">Vider la sélection</a>
+</p>
+
+{% if recipes %}
+  <ul>
+      {% for recipe in recipes %}
+          <li>
+              <a href="{{ url_for('display_recipe', id=recipe['id']) }}">{{ recipe['titre'] }}</a>
+              (<a href="{{ url_for('remove_from_list', recipe_id=recipe['id']) }}">retirer</a>)
+          </li>
+      {% endfor %}
+  </ul>
+{% else %}
+  <p>Aucune recette sélectionnée. Ajoutez des recettes pour générer une liste de courses.</p>
+{% endif %}
+
+<p>
+    <a href="{{ url_for('generate_shopping_list') }}">Générer la liste de courses</a>
+</p>
+{% endblock %}

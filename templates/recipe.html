@@ -1,0 +1,43 @@
+{% extends 'base.html' %} {% block title %}{{ recipe['titre'] }}{% endblock %}
+{% block content %}
+<h1>{{ recipe['titre'] }}</h1>
+<p>
+  Préparation : {{ recipe['temps_preparation'] }} | Cuisson : {{
+  recipe['temps_cuisson'] }} | Rendement : {{ recipe['rendement'] }}
+</p>
+
+<h2>Ingrédients</h2>
+<ul>
+  {% for ing in ingredients %} {% if ing.groupe is defined %}
+  <h3>{{ ing.groupe }}</h3>
+  <ul>
+    {% for item in ing.liste %}
+    <li>
+      {{ item.nom }} - {{ item.quantité }} {{ item.unité }} {% if
+      item.alternative %} ({{ item.alternative }}){% endif %} {% if item.note %}
+      - {{ item.note }}{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <li>
+    {{ ing.nom }} - {{ ing.quantité }} {{ ing.unité }} {% if ing.alternative %}
+    ({{ ing.alternative }}){% endif %} {% if ing.note %} - {{ ing.note }}{%
+    endif %}
+  </li>
+  {% endif %} {% endfor %}
+</ul>
+
+<h2>Instructions</h2>
+<ol>
+  {% for step in instructions %}
+  <li>{{ step }}</li>
+  {% endfor %}
+</ol>
+
+<p>
+  <a href="{{ url_for('add_to_list', recipe_id=recipe['id']) }}"
+    >Ajouter cette recette à ma sélection</a
+  >
+</p>
+{% endblock %}

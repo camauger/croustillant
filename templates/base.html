@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}Mon Application Recettes{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+        <nav>
+            <ul>
+              <li><a href="{{ url_for('index') }}">Accueil</a></li>
+              <li>
+                <a href="{{ url_for('create_recipe') }}">Ajouter une recette</a>
+              </li>
+              <li><a href="{{ url_for('my_list') }}">Ma sélection</a></li>
+              <li>
+                <a href="{{ url_for('generate_shopping_list') }}">Liste de courses</a>
+              </li>
+            </ul>
+          </nav>
+    </header>
+    <hr />
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer></footer>
+  </body>
+</html>

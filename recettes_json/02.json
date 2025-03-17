@@ -1,0 +1,158 @@
+{
+    "id": 2,
+    "titre": "Tofu magique général Tao au air fryer",
+    "temps_preparation": "10 min",
+    "temps_cuisson": "20 min",
+    "rendement": "4 portions",
+    "ingrédients": [
+        {
+            "groupe": "Pour le tofu",
+            "liste": [
+                {
+                    "nom": "Tofu extra ferme",
+                    "quantité": 1,
+                    "unité": "bloc de 450 g (1 lb)"
+                },
+                {
+                    "nom": "Sauce soya",
+                    "quantité": 15,
+                    "unité": "ml",
+                    "alternative": "1 c. à soupe",
+                    "note": "voir NOTES"
+                },
+                {
+                    "nom": "Sirop d'érable",
+                    "quantité": 15,
+                    "unité": "ml",
+                    "alternative": "1 c. à soupe"
+                },
+                {
+                    "nom": "Vinaigre de riz",
+                    "quantité": 15,
+                    "unité": "ml",
+                    "alternative": "1 c. à soupe"
+                },
+                {
+                    "nom": "Levure alimentaire en flocons",
+                    "quantité": 60,
+                    "unité": "ml",
+                    "alternative": "¼ tasse"
+                },
+                {
+                    "nom": "Fécule de maïs",
+                    "quantité": 30,
+                    "unité": "ml",
+                    "alternative": "2 c. à soupe"
+                },
+                {
+                    "nom": "Huile végétale",
+                    "quantité": 30,
+                    "unité": "ml",
+                    "alternative": "2 c. à soupe"
+                }
+            ]
+        },
+        {
+            "groupe": "Pour la sauce et l’assemblage",
+            "liste": [
+                {
+                    "nom": "Sauce soya",
+                    "quantité": 30,
+                    "unité": "ml",
+                    "alternative": "2 c. à soupe"
+                },
+                {
+                    "nom": "Sirop d'érable",
+                    "quantité": 45,
+                    "unité": "ml",
+                    "alternative": "3 c. à soupe"
+                },
+                {
+                    "nom": "Vinaigre de riz",
+                    "quantité": 15,
+                    "unité": "ml",
+                    "alternative": "1 c. à soupe"
+                },
+                {
+                    "nom": "Sauce sriracha ou sambal oelek",
+                    "quantité": 10,
+                    "unité": "ml",
+                    "alternative": "2 c. à thé"
+                },
+                {
+                    "nom": "Huile de sésame grillé",
+                    "quantité": 10,
+                    "unité": "ml",
+                    "alternative": "2 c. à thé"
+                },
+                {
+                    "nom": "Eau",
+                    "quantité": 250,
+                    "unité": "ml",
+                    "alternative": "1 tasse"
+                },
+                {
+                    "nom": "Fécule de maïs",
+                    "quantité": 15,
+                    "unité": "ml",
+                    "alternative": "1 c. à soupe"
+                },
+                {
+                    "nom": "Huile végétale",
+                    "quantité": 15,
+                    "unité": "ml",
+                    "alternative": "1 c. à soupe"
+                },
+                {
+                    "nom": "Gingembre haché",
+                    "quantité": 30,
+                    "unité": "ml",
+                    "alternative": "2 c. à soupe"
+                },
+                {
+                    "nom": "Gousses d’ail, hachées",
+                    "quantité": 2,
+                    "unité": ""
+                },
+                {
+                    "nom": "Sel",
+                    "quantité": 1,
+                    "unité": "pincée"
+                },
+                {
+                    "nom": "Pâte de tomate",
+                    "quantité": 15,
+                    "unité": "ml",
+                    "alternative": "1 c. à soupe"
+                },
+                {
+                    "nom": "Graines de sésame",
+                    "quantité": 0,
+                    "unité": "",
+                    "note": "Au goût"
+                },
+                {
+                    "nom": "Oignons verts",
+                    "quantité": 0,
+                    "unité": "",
+                    "note": "Au goût"
+                }
+            ]
+        }
+    ],
+    "instructions": [
+        "Pour le tofu : Pressez le tofu pour retirer l’excédent d’eau.",
+        "Pour le tofu : Dans un bol, défaites le tofu en morceaux de la grosseur d’une bouchée.",
+        "Pour le tofu : Versez la sauce soya, le sirop d'érable et le vinaigre de riz sur le tofu et mélangez pour bien enrober chaque morceau.",
+        "Pour le tofu : Ajoutez la levure alimentaire, la fécule de maïs et l’huile, puis mélangez de nouveau.",
+        "Pour le tofu (cuisson) : Préchauffez l’air fryer à 190 °C (375 °F) durant 5 minutes.",
+        "Pour le tofu (cuisson) : Mettez le tofu dans le panier en veillant à ne pas le surcharger, et faites cuire de 9 à 11 minutes jusqu’à ce qu’il soit bien doré.",
+        "Pour la sauce et l’assemblage : Dans un petit bol, mélangez la sauce soya, le sirop d'érable, le vinaigre de riz, la sauce sriracha, l’huile de sésame grillé, l’eau et la fécule de maïs. Réservez.",
+        "Pour la sauce et l’assemblage : Dans une poêle, faites chauffer l’huile, ajoutez le gingembre, l’ail et une pincée de sel, et faites sauter pendant 2 minutes.",
+        "Pour la sauce et l’assemblage : Ajoutez la pâte de tomate et poursuivez la cuisson pendant 2 minutes.",
+        "Pour la sauce et l’assemblage : Versez la sauce dans la poêle, mélangez bien et laissez réduire pendant 3 minutes.",
+        "Pour la sauce et l’assemblage : Ajoutez le tofu et faites-le cuire pendant 3 à 4 minutes jusqu’à ce que la sauce soit bien épaisse.",
+        "Pour la sauce et l’assemblage : Garnissez de graines de sésame et d’oignons verts tranchés finement."
+    ],
+    "notes": "Pour la sauce soya : pour une version sans gluten, remplacez-la par de la sauce tamari. Vous pouvez également faire cuire le tofu au four à 200 °C pendant 20 à 22 minutes en alternative."
+}

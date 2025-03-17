@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter une Recette</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Ajouter une Recette</h1>
+    <form method="post">
+        <label for="titre">Titre :</label>
+        <input type="text" name="titre" id="titre" required><br><br>
+
+        <label for="temps_preparation">Temps de préparation :</label>
+        <input type="text" name="temps_preparation" id="temps_preparation"><br><br>
+
+        <label for="temps_cuisson">Temps de cuisson :</label>
+        <input type="text" name="temps_cuisson" id="temps_cuisson"><br><br>
+
+        <label for="rendement">Rendement :</label>
+        <input type="text" name="rendement" id="rendement"><br><br>
+
+        <label for="ingredients">Ingrédients (format JSON) :</label><br>
+        <textarea name="ingredients" id="ingredients" rows="5" cols="50"
+                  placeholder='Ex: [{"nom": "Oignon", "quantité": 1, "unité": ""}]'></textarea><br><br>
+
+        <label for="instructions">Instructions (format JSON) :</label><br>
+        <textarea name="instructions" id="instructions" rows="5" cols="50"
+                  placeholder='Ex: ["Étape 1", "Étape 2"]'></textarea><br><br>
+
+        <button type="submit">Ajouter</button>
+    </form>
+    <p><a href="{{ url_for('index') }}">Retour à la liste de recettes</a></p>
+</body>
+</html>
