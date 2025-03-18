@@ -64,12 +64,15 @@
 
     <section aria-labelledby="instructions-heading">
       <h2 id="instructions-heading">Instructions</h2>
-      <ol>
+      <ol class="animated-instructions">
         {% for step in instructions %}
-        <li>{{ step }}</li>
+          <li style="--delay: {{ loop.index * 0.2 }}s">
+            {{ step }}
+          </li>
         {% endfor %}
       </ol>
     </section>
+
 
     <section>
       <a

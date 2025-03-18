@@ -310,3 +310,47 @@ h2 {
   display: block;
   margin-bottom: 1rem;
 }
+
+.animated-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  counter-reset: steps;
+  list-style: none;
+  padding-left: 0;
+  margin-block: 30px;
+}
+
+.animated-instructions li {
+  counter-increment: steps;
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: fade-slide-in 0.6s forwards;
+  animation-delay: var(--delay);
+  padding-inline-start: 10px;
+  position: relative;
+}
+
+.animated-instructions li::before {
+  content: counter(steps);
+  position: absolute;
+  left: -35px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #ff8c42;
+  color: white;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+@keyframes fade-slide-in {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

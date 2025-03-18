@@ -6,12 +6,12 @@ block content %}
     <section>
       <div class="card-container">
         {% for recipe in recipes %}
-        <div class="card">
+        <div class="card"><a href="{{ url_for('display_recipe', id=recipe['id']) }}">
           <img
     class="recipe-image"
     src="{{ url_for('static', filename='images/' ~ recipe['id'] ~ '.png') }}"
     alt="Photo du plat {{ recipe['titre'] }}"
-  >
+  ></a>
           <h3>
             <a href="{{ url_for('display_recipe', id=recipe['id']) }}"
               >{{ recipe['titre'] }}</a
