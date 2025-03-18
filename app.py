@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import json
@@ -5,7 +6,7 @@ import json
 app = Flask(__name__)
 app.secret_key = 'votre_cle_secrete'  # Remplacez par une clé plus sécurisée
 
-import os
+
 @app.before_first_request
 def initialize_db_data():
     conn = get_db_connection()
@@ -20,8 +21,10 @@ def initialize_db_data():
                 with open(chemin_fichier, 'r', encoding='utf-8') as f:
                     recette = json.load(f)
                 # Convertir les listes en chaînes JSON
-                ingredients_json = json.dumps(recette["ingrédients"], ensure_ascii=False)
-                instructions_json = json.dumps(recette["instructions"], ensure_ascii=False)
+                ingredients_json = json.dumps(
+                    recette["ingrédients"], ensure_ascii=False)
+                instructions_json = json.dumps(
+                    recette["instructions"], ensure_ascii=False)
                 cursor.execute('''
                     INSERT INTO recipes (titre, temps_preparation, temps_cuisson, rendement, ingredients, instructions)
                     VALUES (?, ?, ?, ?, ?, ?)
@@ -33,10 +36,12 @@ def initialize_db_data():
                     ingredients_json,
                     instructions_json
                 ))
-                print(f"Recette '{recette['titre']}' ajoutée depuis le fichier {fichier}.")
+                print(
+                    f"Recette '{recette['titre']}' ajoutée depuis le fichier {fichier}.")
         conn.commit()
         print("Toutes les recettes ont été ajoutées à la base de données.")
     conn.close()
+
 
 def get_db_connection():
     conn = sqlite3.connect('recipes.db')
@@ -55,7 +60,6 @@ def get_db_connection():
     ''')
     conn.commit()
     return conn
-
 
 
 @app.route('/')
