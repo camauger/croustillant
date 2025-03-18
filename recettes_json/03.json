@@ -1,0 +1,55 @@
+{
+    "id": 3,
+    "titre": "Creamy Peanut Miso Ramen",
+    "temps_preparation": "15 min",
+    "temps_cuisson": "20 min",
+    "rendement": "4 portions",
+    "ingrédients": [
+        {
+            "groupe": "Pour le bouillon et les nouilles",
+            "liste": [
+                {"nom": "Huile végétale", "quantité": 15, "unité": "ml", "alternative": "1 c. à soupe"},
+                {"nom": "Chilli crisp", "quantité": 15, "unité": "ml", "alternative": "1 c. à soupe"},
+                {"nom": "Gousses d’ail", "quantité": 4, "unité": ""},
+                {"nom": "Gingembre frais", "quantité": 5, "unité": "cm", "alternative": "2 pouces"},
+                {"nom": "Curcuma", "quantité": 5, "unité": "ml", "alternative": "1 c. à thé"},
+                {"nom": "Citron vert", "quantité": 1, "unité": ""},
+                {"nom": "Oignons verts", "quantité": 6, "unité": ""},
+                {"nom": "Pâte miso", "quantité": 30, "unité": "ml", "alternative": "2 c. à soupe"},
+                {"nom": "Beurre d’arachide lisse", "quantité": 45, "unité": "ml", "alternative": "3 c. à soupe"},
+                {"nom": "Tahini", "quantité": 45, "unité": "ml", "alternative": "3 c. à soupe"},
+                {"nom": "Lait de coco", "quantité": 400, "unité": "ml"},
+                {"nom": "Bouillon de légumes", "quantité": 1.5, "unité": "L"},
+                {"nom": "Nouilles ramen", "quantité": 4, "unité": "paquets"},
+                {"nom": "Sel et poivre", "quantité": 0, "unité": "", "note": "Au goût"}
+            ]
+        },
+        {
+            "groupe": "Pour les crumbles de tofu",
+            "liste": [
+                {"nom": "Huile végétale", "quantité": 30, "unité": "ml", "alternative": "2 c. à soupe"},
+                {"nom": "Tofu fumé", "quantité": 1, "unité": "bloc"},
+                {"nom": "Sauce soya", "quantité": 15, "unité": "ml", "alternative": "1 c. à soupe"},
+                {"nom": "Fumée liquide", "quantité": 5, "unité": "ml", "alternative": "1 c. à thé"},
+                {"nom": "Huile de chili", "quantité": 5, "unité": "ml", "alternative": "1 c. à thé"}
+            ]
+        },
+        {
+            "groupe": "Pour garnir",
+            "liste": [
+                {"nom": "Chilli crisp", "quantité": 0, "unité": "", "note": "Au goût"},
+                {"nom": "Graines de sésame grillées", "quantité": 0, "unité": "", "note": "Au goût"},
+                {"nom": "Feuilles de coriandre fraîche", "quantité": 0, "unité": "", "note": "Au goût"}
+            ]
+        }
+    ],
+    "instructions": [
+        "Préparez les ingrédients : épluchez et râpez l’ail et le gingembre, zestez le citron vert et coupez-le en quartiers, émincez finement les oignons verts (séparez les parties blanches et vertes) et égouttez le tofu.",
+        "Dans une grande casserole, chauffez l’huile végétale et le chilli crisp à feu moyen. Faites revenir l’ail, le gingembre, le curcuma, le zeste de citron vert et les parties blanches des oignons verts pendant 5 minutes.",
+        "Ajoutez la pâte miso, le beurre d’arachide et le tahini. Mélangez bien, puis incorporez le lait de coco et portez à frémissement.",
+        "Ajoutez le bouillon de légumes, baissez le feu et laissez mijoter doucement.",
+        "Pour les crumbles : chauffez l’huile végétale dans une poêle. Émiettez le tofu fumé et faites-le revenir 5 à 6 minutes jusqu’à ce qu’il soit doré. Ajoutez la sauce soya, la fumée liquide et l’huile de chili, mélangez bien et gardez chaud.",
+        "Ajoutez les nouilles ramen au bouillon bouillant et cuisez selon les instructions (environ 3 à 4 minutes).",
+        "Servez en répartissant les nouilles dans des bols, ajoutez du bouillon, garnissez de tofu crumble, oignons verts réservés, coriandre, graines de sésame et quartiers de citron vert."
+    ]
+}

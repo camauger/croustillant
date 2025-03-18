@@ -7,6 +7,11 @@ block content %}
       <div class="card-container">
         {% for recipe in recipes %}
         <div class="card">
+          <img
+    class="recipe-image"
+    src="{{ url_for('static', filename='images/' ~ recipe['id'] ~ '.png') }}"
+    alt="Photo du plat {{ recipe['titre'] }}"
+  >
           <h3>
             <a href="{{ url_for('display_recipe', id=recipe['id']) }}"
               >{{ recipe['titre'] }}</a

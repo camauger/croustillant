@@ -5,28 +5,40 @@
    VARIABLES - PALETTE MINIMALISTE
    ============================== */
 :root {
+  /* Palette de couleurs */
+  --rouge-doux: #a94a4a; /* Rouge doux - couleur principale */
+  --rouge-sombre: #913f3f; /* Rouge plus sombre pour hover */
+  --jaune-dore: #f4d793; /* Jaune doré doux - couleur d'accent */
+  --jaune-clair: #fff6da; /* Jaune clair - arrière-plan général chaleureux */
+  --vert-doux: #889e73; /* Vert doux - bordures légères pour contraste subtil */
+  --blanc-pur: #ffffff; /* Blanc pur - arrière-plan cartes pour contraste */
+  --gris-fonce: #444444; /* Gris foncé - texte principal, conservé pour lisibilité */
+  --gris-moyen: #767676; /* Gris moyen - texte secondaire, conservé pour lisibilité */
+  --gris-clair: #f4f4f4; /* Gris clair - arrière-plan général pour contraste */
+
   /* Couleurs principales */
-  --color-primary: #81a4cd; /* Bleu pâle - couleur principale plus légère */
-  --color-primary-dark: #6b8eb5; /* Bleu pâle foncé - pour hover */
-  --color-accent: #f3b562; /* Jaune doux - couleur d'accent subtile */
+  --color-primary: #a94a4a;
+  --color-primary-dark: #913f3f;
+  --color-accent: #f4d793;
 
   /* Texte */
-  --color-text: #444444; /* Gris foncé - texte principal moins intense */
-  --color-text-light: #767676; /* Gris moyen - texte secondaire */
-  --color-text-header: #444444; /* Cohérence avec le texte principal */
-  --color-link: #81a4cd; /* Même que la couleur principale pour cohérence */
+  --color-text: #444444; /* Gris foncé - texte principal, conservé pour lisibilité */
+  --color-text-light: #767676; /* Gris moyen - texte secondaire, conservé pour lisibilité */
+  --color-text-header: #a94a4a; /* Texte du header assorti à la couleur principale */
+  --color-link: #a94a4a; /* Liens assortis à la couleur principale pour cohérence */
+  --color-btn: #fff6da; /* Boutons assortis à la couleur principale pour cohérence */
 
   /* Header */
-  --color-header-bg: #f4f4f4; /* Gris très clair - header presque blanc */
-  --color-header-text: #444444; /* Gris foncé - texte du header (même que texte principal) */
+  --color-header-bg: #fff6da; /* Beige très clair - header lumineux et doux */
+  --color-header-text: #a94a4a; /* Texte du header assorti à la couleur principale */
 
   /* Fonds */
-  --color-bg: #fcfcfc; /* Blanc cassé très léger - arrière-plan général */
-  --color-bg-card: #ffffff; /* Blanc pur - arrière-plan cartes */
+  --color-bg: #fff6da; /* Beige très clair - arrière-plan général chaleureux */
+  --color-bg-card: #ffffff; /* Blanc pur - arrière-plan cartes pour contraste */
 
   /* Bordures */
-  --color-border: #e5e5e5; /* Gris clair neutre - bordures */
-  --color-border-light: #f0f0f0; /* Gris très clair - bordures légères */
+  --color-border: #889e73; /* Vert doux - bordures légères pour contraste subtil */
+  --color-border-light: #f4d793; /* Jaune doré très clair - bordures très légères */
 
   /* Espacement */
   --spacing-xs: 5px;
@@ -148,8 +160,20 @@ article header {
   border-top-right-radius: var(--border-radius);
 }
 
+article header > div {
+  display: flex;
+  gap: 20px;
+}
+
+article header div img {
+  max-width: 50%;
+}
+
 article h1 {
-  color: var(--color-header-text);
+  color: var(--color-bg);
+  font-size: 2.5rem;
+  margin-block: 30px;
+  text-align: center;
 }
 
 article footer {
@@ -208,7 +232,7 @@ section {
   padding: var(--spacing-sm) var(--spacing-sm);
   margin-top: var(--spacing-sm);
   background-color: var(--color-primary);
-  color: white;
+  color: var(--color-btn);
   text-decoration: none;
   border-radius: var(--border-radius-sm);
   transition: background-color var(--transition-default);
@@ -234,10 +258,21 @@ h2 {
 }
 
 .recipe-meta {
-  display: flex;
+  color: var(--jaune-clair);
+  flex-direction: column;
   flex-wrap: wrap;
   gap: var(--spacing-lg);
   margin: var(--spacing-sm) 0;
+}
+
+.recipe-meta div {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: 4px;
+  gap: 6px;
+  margin-bottom: 1rem;
 }
 
 .recipe-meta dt {
@@ -262,8 +297,16 @@ h2 {
 /* ==============================
      RESPONSIVE
      ============================== */
-@media (max-width: 600px) {
+@media (min-width: 600px) {
   .recipe-meta {
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
   }
+}
+
+.recipe-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 1rem;
 }

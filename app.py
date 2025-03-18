@@ -7,6 +7,9 @@ app = Flask(__name__)
 app.secret_key = 'votre_cle_secrete'  # Remplacez par une clé plus sécurisée
 
 
+# Ne pas oublier d'activer l'environnement virtuel avant d'exécuter cette commande
+# .\env\Scripts\Activate
+
 @app.before_first_request
 def initialize_db_data():
     conn = get_db_connection()

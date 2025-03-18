@@ -4,20 +4,26 @@
   <article aria-labelledby="recipe-title">
     <header>
       <h1 id="recipe-title">{{ recipe['titre'] }}</h1>
-      <dl class="recipe-meta">
-        <div>
-          <dt>Préparation</dt>
-          <dd>{{ recipe['temps_preparation'] }}</dd>
-        </div>
-        <div>
-          <dt>Cuisson</dt>
-          <dd>{{ recipe['temps_cuisson'] }}</dd>
-        </div>
-        <div>
-          <dt>Rendement</dt>
-          <dd>{{ recipe['rendement'] }}</dd>
-        </div>
-      </dl>
+      <div>
+        <img
+          src="{{ url_for('static', filename='images/' ~ recipe['id'] ~ '.png') }}"
+          alt="Photo du plat {{ recipe['titre'] }}"
+        />
+        <dl class="recipe-meta">
+          <div>
+            <dt>Préparation</dt>
+            <dd>{{ recipe['temps_preparation'] }}</dd>
+          </div>
+          <div>
+            <dt>Cuisson</dt>
+            <dd>{{ recipe['temps_cuisson'] }}</dd>
+          </div>
+          <div>
+            <dt>Rendement</dt>
+            <dd>{{ recipe['rendement'] }}</dd>
+          </div>
+        </dl>
+      </div>
     </header>
 
     <section aria-labelledby="ingredients-heading">
