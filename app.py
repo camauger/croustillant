@@ -5,6 +5,38 @@ import json
 app = Flask(__name__)
 app.secret_key = 'votre_cle_secrete'  # Remplacez par une clé plus sécurisée
 
+import os
+@app.before_first_request
+def initialize_db_data():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Vérifier si la table recipes est vide
+    count = cursor.execute("SELECT COUNT(*) FROM recipes").fetchone()[0]
+    if count == 0:
+        dossier_json = 'recettes_json'  # Ce dossier doit être dans votre dépôt
+        for fichier in os.listdir(dossier_json):
+            if fichier.endswith('.json'):
+                chemin_fichier = os.path.join(dossier_json, fichier)
+                with open(chemin_fichier, 'r', encoding='utf-8') as f:
+                    recette = json.load(f)
+                # Convertir les listes en chaînes JSON
+                ingredients_json = json.dumps(recette["ingrédients"], ensure_ascii=False)
+                instructions_json = json.dumps(recette["instructions"], ensure_ascii=False)
+                cursor.execute('''
+                    INSERT INTO recipes (titre, temps_preparation, temps_cuisson, rendement, ingredients, instructions)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (
+                    recette["titre"],
+                    recette["temps_preparation"],
+                    recette["temps_cuisson"],
+                    recette["rendement"],
+                    ingredients_json,
+                    instructions_json
+                ))
+                print(f"Recette '{recette['titre']}' ajoutée depuis le fichier {fichier}.")
+        conn.commit()
+        print("Toutes les recettes ont été ajoutées à la base de données.")
+    conn.close()
 
 def get_db_connection():
     conn = sqlite3.connect('recipes.db')
