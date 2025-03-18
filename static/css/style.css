@@ -1,13 +1,102 @@
+/* ==============================
+   VARIABLES
+   ============================== */
+/* ==============================
+   VARIABLES - PALETTE MINIMALISTE
+   ============================== */
+:root {
+  /* Couleurs principales */
+  --color-primary: #81a4cd; /* Bleu pâle - couleur principale plus légère */
+  --color-primary-dark: #6b8eb5; /* Bleu pâle foncé - pour hover */
+  --color-accent: #f3b562; /* Jaune doux - couleur d'accent subtile */
+
+  /* Texte */
+  --color-text: #444444; /* Gris foncé - texte principal moins intense */
+  --color-text-light: #767676; /* Gris moyen - texte secondaire */
+  --color-text-header: #444444; /* Cohérence avec le texte principal */
+  --color-link: #81a4cd; /* Même que la couleur principale pour cohérence */
+
+  /* Header */
+  --color-header-bg: #f4f4f4; /* Gris très clair - header presque blanc */
+  --color-header-text: #444444; /* Gris foncé - texte du header (même que texte principal) */
+
+  /* Fonds */
+  --color-bg: #fcfcfc; /* Blanc cassé très léger - arrière-plan général */
+  --color-bg-card: #ffffff; /* Blanc pur - arrière-plan cartes */
+
+  /* Bordures */
+  --color-border: #e5e5e5; /* Gris clair neutre - bordures */
+  --color-border-light: #f0f0f0; /* Gris très clair - bordures légères */
+
+  /* Espacement */
+  --spacing-xs: 5px;
+  --spacing-sm: 10px;
+  --spacing-md: 15px;
+  --spacing-lg: 20px;
+
+  /* Ombres plus subtiles */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-article: 0 1px 4px rgba(0, 0, 0, 0.05);
+
+  /* Transitions */
+  --transition-default: 0.2s ease;
+
+  /* Bordures */
+  --border-radius: 6px;
+  --border-radius-sm: 3px;
+}
+/* ==============================
+     RESET & BASE
+     ============================== */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
-  padding: 20px;
-  background-color: #f9f9f9;
-  color: #333;
+  padding: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
+
+h1,
+h2 {
+  color: var(--color-text-header);
+  margin-bottom: var(--spacing-sm);
+}
+
+p {
+  font-size: 1.1em;
+  margin-bottom: var(--spacing-lg);
+}
+
+ul,
+ol {
+  padding-left: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+li {
+  margin-bottom: var(--spacing-sm);
+}
+
+/* ==============================
+     LIENS
+     ============================== */
+a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ==============================
+     HEADER & NAVIGATION
+     ============================== */
 header {
-  background-color: #333;
-  padding: 10px 0;
+  background-color: var(--color-header-bg);
+  padding: var(--spacing-lg) 0;
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-header-text);
 }
 
 header nav ul {
@@ -20,96 +109,161 @@ header nav ul {
 }
 
 header nav ul li {
-  margin: 0 20px;
+  margin: 0 var(--spacing-lg);
 }
 
 header nav ul li a {
-  color: #fff;
+  color: var(--color-header-text);
   text-decoration: none;
   font-size: 16px;
   font-weight: bold;
-  transition: color 0.3s ease;
+  transition: color var(--transition-default);
 }
 
 header nav ul li a:hover {
-  color: #ff9900;
+  color: var(--color-primary);
 }
 
-h1,
-h2 {
-  color: #444;
-  margin-bottom: 10px;
+/* ==============================
+     LAYOUT PRINCIPAL
+     ============================== */
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
 }
 
-p {
-  font-size: 1.1em;
-  margin-bottom: 20px;
+article {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-article);
 }
 
-ul,
-ol {
-  padding-left: 20px;
-  margin-bottom: 20px;
+article header {
+  background-color: var(--color-primary);
+  color: var(--color-header-text);
+  padding: var(--spacing-md);
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
 }
 
-li {
-  margin-bottom: 10px;
+article h1 {
+  color: var(--color-header-text);
 }
 
-/* Style pour les liens */
-a {
-  color: #0066cc;
-  text-decoration: none;
+article footer {
+  background-color: var(--color-primary);
+  color: var(--color-header-text);
+  padding: var(--spacing-md);
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
 }
 
-a:hover {
-  text-decoration: underline;
+section {
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
 
-
-/* Liste de recettes */
+/* ==============================
+     CARTES DE RECETTES
+     ============================== */
 .card-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
 }
 
 .card {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-default);
 }
 
 .card:hover {
-    transform: translateY(-5px);
+  transform: translateY(-5px);
 }
 
 .card h3 {
-    margin-top: 0;
-    font-size: 1.2em;
+  margin-top: 0;
+  font-size: 1.2em;
 }
 
 .card p {
-    font-size: 0.9em;
-    color: #555;
-    line-height: 1.4;
+  font-size: 0.9em;
+  color: var(--color-text-light);
+  line-height: 1.4;
 }
 
-.btn {
-    display: inline-block;
-    padding: 8px 12px;
-    margin-top: 10px;
-    background-color: #ff9900;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
+/* ==============================
+     BOUTONS
+     ============================== */
+.btn,
+.btn-add {
+  display: inline-block;
+  padding: var(--spacing-sm) var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  background-color: var(--color-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--border-radius-sm);
+  transition: background-color var(--transition-default);
 }
 
-.btn:hover {
-    background-color: #e68a00;
+.btn:hover,
+.btn-add:hover {
+  background-color: var(--color-primary-dark);
+  text-decoration: none;
+}
+
+.btn-add {
+  padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+/* ==============================
+     FICHE RECETTE
+     ============================== */
+h2 {
+  border-bottom: 2px solid var(--color-border-light);
+  padding-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.recipe-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  margin: var(--spacing-sm) 0;
+}
+
+.recipe-meta dt {
+  font-weight: bold;
+}
+
+.recipe-meta dd {
+  margin: 0;
+}
+
+/* Ingrédients */
+.ing-name {
+  font-weight: bold;
+}
+
+.ing-alternative,
+.ing-note {
+  font-style: italic;
+  color: var(--color-text-light);
+}
+
+/* ==============================
+     RESPONSIVE
+     ============================== */
+@media (max-width: 600px) {
+  .recipe-meta {
+    flex-direction: column;
+  }
 }

@@ -1,43 +1,80 @@
 {% extends 'base.html' %} {% block title %}{{ recipe['titre'] }}{% endblock %}
 {% block content %}
-<h1>{{ recipe['titre'] }}</h1>
-<p>
-  Préparation : {{ recipe['temps_preparation'] }} | Cuisson : {{
-  recipe['temps_cuisson'] }} | Rendement : {{ recipe['rendement'] }}
-</p>
+<main>
+  <article aria-labelledby="recipe-title">
+    <header>
+      <h1 id="recipe-title">{{ recipe['titre'] }}</h1>
+      <dl class="recipe-meta">
+        <div>
+          <dt>Préparation</dt>
+          <dd>{{ recipe['temps_preparation'] }}</dd>
+        </div>
+        <div>
+          <dt>Cuisson</dt>
+          <dd>{{ recipe['temps_cuisson'] }}</dd>
+        </div>
+        <div>
+          <dt>Rendement</dt>
+          <dd>{{ recipe['rendement'] }}</dd>
+        </div>
+      </dl>
+    </header>
 
-<h2>Ingrédients</h2>
-<ul>
-  {% for ing in ingredients %} {% if ing.groupe is defined %}
-  <h3>{{ ing.groupe }}</h3>
-  <ul>
-    {% for item in ing.liste %}
-    <li>
-      {{ item.nom }} - {{ item.quantité }} {{ item.unité }} {% if
-      item.alternative %} ({{ item.alternative }}){% endif %} {% if item.note %}
-      - {{ item.note }}{% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <li>
-    {{ ing.nom }} - {{ ing.quantité }} {{ ing.unité }} {% if ing.alternative %}
-    ({{ ing.alternative }}){% endif %} {% if ing.note %} - {{ ing.note }}{%
-    endif %}
-  </li>
-  {% endif %} {% endfor %}
-</ul>
+    <section aria-labelledby="ingredients-heading">
+      <h2 id="ingredients-heading">Ingrédients</h2>
+      {% for ing in ingredients %} {% if ing.groupe is defined %}
+      <section aria-labelledby="group-{{ loop.index }}">
+        <h3 id="group-{{ loop.index }}">{{ ing.groupe }}</h3>
+        <ul>
+          {% for item in ing.liste %}
+          <li>
+            <span class="ing-name">{{ item.nom }}</span> –
+            <span class="ing-quantity">{{ item.quantité }}</span>
+            <span class="ing-unit">{{ item.unité }}</span>
+            {% if item.alternative %}
+            <span class="ing-alternative"> ({{ item.alternative }})</span>
+            {% endif %} {% if item.note %}
+            <span class="ing-note"> – {{ item.note }}</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% else %}
+      <ul>
+        <li>
+          <span class="ing-name">{{ ing.nom }}</span> –
+          <span class="ing-quantity">{{ ing.quantité }}</span>
+          <span class="ing-unit">{{ ing.unité }}</span>
+          {% if ing.alternative %}
+          <span class="ing-alternative"> ({{ ing.alternative }})</span>
+          {% endif %} {% if ing.note %}
+          <span class="ing-note"> – {{ ing.note }}</span>
+          {% endif %}
+        </li>
+      </ul>
+      {% endif %} {% endfor %}
+    </section>
 
-<h2>Instructions</h2>
-<ol>
-  {% for step in instructions %}
-  <li>{{ step }}</li>
-  {% endfor %}
-</ol>
+    <section aria-labelledby="instructions-heading">
+      <h2 id="instructions-heading">Instructions</h2>
+      <ol>
+        {% for step in instructions %}
+        <li>{{ step }}</li>
+        {% endfor %}
+      </ol>
+    </section>
 
-<p>
-  <a href="{{ url_for('add_to_list', recipe_id=recipe['id']) }}"
-    >Ajouter cette recette à ma sélection</a
-  >
-</p>
+    <section>
+      <a
+        class="btn-add"
+        href="{{ url_for('add_to_list', recipe_id=recipe['id']) }}"
+      >
+        Ajouter cette recette à ma sélection
+      </a>
+    </section>
+
+    <footer></footer>
+  </article>
+</main>
 {% endblock %}

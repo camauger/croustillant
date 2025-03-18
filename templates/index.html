@@ -1,20 +1,29 @@
-{% extends 'base.html' %}
-
-{% block title %}Liste de Recettes{% endblock %}
-
-{% block content %}
-<h1>Liste de Recettes</h1>
-<div class="card-container">
-    {% for recipe in recipes %}
+{% extends 'base.html' %} {% block title %}Liste de Recettes{% endblock %} {%
+block content %}
+<main>
+  <article>
+    <header><h1>Liste de Recettes</h1></header>
+    <section>
+      <div class="card-container">
+        {% for recipe in recipes %}
         <div class="card">
-            <h3><a href="{{ url_for('display_recipe', id=recipe['id']) }}">{{ recipe['titre'] }}</a></h3>
-            <p>
-                Préparation : {{ recipe['temps_preparation'] }}<br>
-                Cuisson : {{ recipe['temps_cuisson'] }}<br>
-                Rendement : {{ recipe['rendement'] }}
-            </p>
-            <a href="{{ url_for('display_recipe', id=recipe['id']) }}" class="btn">Voir la recette</a>
+          <h3>
+            <a href="{{ url_for('display_recipe', id=recipe['id']) }}"
+              >{{ recipe['titre'] }}</a
+            >
+          </h3>
+          <p>
+            Préparation : {{ recipe['temps_preparation'] }}<br />
+            Cuisson : {{ recipe['temps_cuisson'] }}<br />
+            Rendement : {{ recipe['rendement'] }}
+          </p>
+          <a href="{{ url_for('display_recipe', id=recipe['id']) }}" class="btn"
+            >Voir la recette</a
+          >
         </div>
-    {% endfor %}
-</div>
+        {% endfor %}
+      </div>
+    </section>
+  </article>
+</main>
 {% endblock %}

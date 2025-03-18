@@ -3,10 +3,46 @@
 {% block title %}Liste de Courses{% endblock %}
 
 {% block content %}
-<h1>Liste de Courses</h1>
-<ul>
-    {% for ing in ingredients %}
-        <li>{{ ing['nom'] }} - {{ ing['quantité'] }} {{ ing['unité'] }}</li>
-    {% endfor %}
-</ul>
+<main id="main-content">
+  <article class="shopping-list">
+    <header>
+      <h1>Liste de Courses</h1>
+      <p class="description">Basée sur vos recettes sélectionnées</p>
+    </header>
+
+    <section aria-labelledby="ingredients-list">
+      <h2 id="ingredients-list" class="visually-hidden">Ingrédients à acheter</h2>
+
+      {% if ingredients %}
+        <ul class="ingredients-list" role="list">
+          {% for ing in ingredients %}
+            <li class="ingredient-item">
+              <span class="ingredient-name">{{ ing['nom'] }}</span>
+              <span class="ingredient-quantity">
+                {{ ing['quantité'] }} <span class="ingredient-unit">{{ ing['unité'] }}</span>
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="empty-state" role="status">
+          <p>Aucun ingrédient dans votre liste de courses.</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <footer class="actions-footer">
+      <div class="action-buttons">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+          Retour aux recettes
+        </a>
+        {% if ingredients %}
+          <button class="btn btn-primary" onclick="window.print()" aria-label="Imprimer la liste de courses">
+            <span aria-hidden="true">🖨️</span> Imprimer
+          </button>
+        {% endif %}
+      </div>
+    </footer>
+  </article>
+</main>
 {% endblock %}

@@ -1,27 +1,56 @@
 {% extends 'base.html' %}
 
-{% block title %}Ma Sélection{% endblock %}
+{% block title %}Ma Sélection de Recettes{% endblock %}
 
 {% block content %}
-<h1>Mes Recettes Sélectionnées</h1>
-<p>
-    <a href="{{ url_for('clear_list') }}">Vider la sélection</a>
-</p>
+<main id="main-content">
+  <article class="recipe-selection">
+    <header>
+      <h1>Mes Recettes Sélectionnées</h1>
+    </header>
 
-{% if recipes %}
-  <ul>
-      {% for recipe in recipes %}
-          <li>
-              <a href="{{ url_for('display_recipe', id=recipe['id']) }}">{{ recipe['titre'] }}</a>
-              (<a href="{{ url_for('remove_from_list', recipe_id=recipe['id']) }}">retirer</a>)
-          </li>
-      {% endfor %}
-  </ul>
-{% else %}
-  <p>Aucune recette sélectionnée. Ajoutez des recettes pour générer une liste de courses.</p>
-{% endif %}
+    <section aria-labelledby="selected-recipes">
+      <div class="selection-actions">
+        <a href="{{ url_for('clear_list') }}" class="btn btn-secondary" aria-label="Vider toute la sélection de recettes">
+          <span aria-hidden="true">🗑️</span> Vider la sélection
+        </a>
+      </div>
 
-<p>
-    <a href="{{ url_for('generate_shopping_list') }}">Générer la liste de courses</a>
-</p>
+      {% if recipes %}
+        <h2 id="selected-recipes" class="visually-hidden">Liste des recettes sélectionnées</h2>
+        <ul class="recipe-list" role="list">
+          {% for recipe in recipes %}
+            <li class="recipe-item">
+              <div class="recipe-info">
+                <a href="{{ url_for('display_recipe', id=recipe['id']) }}" class="recipe-link">
+                  {{ recipe['titre'] }}
+                </a>
+              </div>
+              <div class="recipe-actions">
+                <a href="{{ url_for('remove_from_list', recipe_id=recipe['id']) }}"
+                   class="btn btn-sm btn-outline"
+                   aria-label="Retirer {{ recipe['titre'] }} de ma sélection">
+                  <span aria-hidden="true">×</span> Retirer
+                </a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="empty-state" role="status">
+          <p>Aucune recette sélectionnée. Ajoutez des recettes pour générer une liste de courses.</p>
+          <p><a href="{{ url_for('index') }}" class="btn">Parcourir les recettes</a></p>
+        </div>
+      {% endif %}
+
+      {% if recipes %}
+        <div class="action-footer">
+          <a href="{{ url_for('generate_shopping_list') }}" class="btn btn-primary" role="button">
+            <span aria-hidden="true">🛒</span> Générer la liste de courses
+          </a>
+        </div>
+      {% endif %}
+    </section>
+  </article>
+</main>
 {% endblock %}
