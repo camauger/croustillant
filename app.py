@@ -9,7 +9,21 @@ app.secret_key = 'votre_cle_secrete'  # Remplacez par une clé plus sécurisée
 def get_db_connection():
     conn = sqlite3.connect('recipes.db')
     conn.row_factory = sqlite3.Row
+    # Créer la table si elle n'existe pas
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS recipes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            titre TEXT NOT NULL UNIQUE,
+            temps_preparation TEXT,
+            temps_cuisson TEXT,
+            rendement TEXT,
+            ingredients TEXT,
+            instructions TEXT
+        )
+    ''')
+    conn.commit()
     return conn
+
 
 
 @app.route('/')
