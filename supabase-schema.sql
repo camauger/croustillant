@@ -1,5 +1,9 @@
 -- Croustillant Database Schema for Supabase (PostgreSQL)
 
+-- Grant permissions on public schema (if needed)
+-- Note: In Supabase SQL Editor, you should be connected as postgres superuser
+-- If you get permission errors, ensure you're using the SQL Editor (not API)
+
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

@@ -104,10 +104,17 @@ cd croustillant
 ```
 
 #### 2. Set Up Supabase
-- Create account at [supabase.com](https://supabase.com)
-- Create new project
-- Run `supabase-schema.sql` in SQL Editor
-- Get API credentials
+1. Create account at [supabase.com](https://supabase.com)
+2. Click **"New Project"** and create a new project
+3. Once project is ready, click **"SQL Editor"** in the left sidebar
+4. Open the `supabase-schema.sql` file from your project
+5. **Important**: Select and copy ONLY the SQL code (starting with `-- Croustillant Database Schema...`), NOT the filename
+6. Paste the SQL code into the Supabase SQL Editor
+7. Click **"Run"** button - you should see "Success. No rows returned"
+8. Get API credentials:
+   - Go to **"Project Settings"** (gear icon in sidebar)
+   - Click **"API"** tab
+   - Copy the **Project URL** and **anon/public key**
 
 #### 3. Configure Environment
 Create `.env` file:
@@ -301,6 +308,26 @@ curl -X POST http://localhost:8888/api/shopping-list \
 - Verify Supabase credentials
 - Check database table exists
 - Test connection from Supabase dashboard
+
+**SQL syntax error when running schema**
+- Make sure you copied ONLY the SQL code from `supabase-schema.sql`, not the filename
+- The SQL should start with `-- Croustillant Database Schema` and end with the COMMENT statements
+- If you see "syntax error at or near 'supabase'", you likely included the filename - try copying again
+- Clear the SQL Editor completely before pasting fresh SQL code
+
+**Permission denied for schema public error**
+- **Important**: Make sure you're using the **SQL Editor** in Supabase dashboard (not the API)
+- The SQL Editor runs as the postgres superuser and should have all permissions
+- If you still get this error:
+  1. In Supabase dashboard, go to **SQL Editor**
+  2. Make sure you're in the correct project
+  3. Try running this first (to grant permissions):
+     ```sql
+     GRANT USAGE ON SCHEMA public TO postgres;
+     GRANT CREATE ON SCHEMA public TO postgres;
+     ```
+  4. Then run the full schema SQL again
+- Alternative: Use Supabase's **Table Editor** → **New Table** and create manually, or use the **Database** → **Migrations** feature
 
 **LocalStorage issues**
 - Clear browser cache
