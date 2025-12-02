@@ -1,3 +1,9 @@
+# Environment variables
+.env
+.env.local
+.env.production
+.flaskenv
+
 # Python
 __pycache__/
 *.py[cod]
@@ -5,6 +11,8 @@ __pycache__/
 *.so
 .Python
 env/
+venv/
+ENV/
 build/
 develop-eggs/
 dist/
@@ -16,39 +24,40 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 
-# Virtual Environment
-venv/
-ENV/
-env/
-.env/
+# Netlify
+.netlify/
+.netlify.toml.bak
 
-# Flask
+# Flask (legacy)
 instance/
 .webassets-cache
 flask_session/
 
-# SQLite database files
-*.sqlite
+# Database files
 *.db
+*.sqlite
+*.sqlite3
 *.db-shm
 *.db-wal
+recipes.db
 
 # Logs
 *.log
 logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # IDE specific files
 .idea/
 .vscode/
 *.swp
 *.swo
-.DS_Store
-.env
-.flaskenv
 
 # OS specific files
 # Windows
@@ -65,3 +74,16 @@ Icon
 
 # Linux
 *~
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
+# Local test files
+test-local/
+local-tests/
