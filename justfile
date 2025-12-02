@@ -9,7 +9,19 @@ default:
 # Start local development server with Netlify CLI
 dev:
     @echo "🚀 Starting Netlify dev server..."
-    netlify dev
+    @if command -v netlify >/dev/null 2>&1; then \
+        netlify dev; \
+    elif [ -f "/c/usr/local/netlify" ]; then \
+        /c/usr/local/netlify dev; \
+    elif command -v npx >/dev/null 2>&1; then \
+        echo "⚠️  Using npx to run netlify (not in PATH)"; \
+        npx --yes netlify-cli dev; \
+    else \
+        echo "❌ Error: Netlify CLI is not installed"; \
+        echo "   Install it with: just install-netlify"; \
+        echo "   Or manually: npm install -g netlify-cli"; \
+        exit 1; \
+    fi
 
 # Install dependencies
 # Install Python dependencies for Netlify functions and migration tools
@@ -43,20 +55,33 @@ migrate:
     cd migration && pip install -r requirements.txt && python migrate-to-supabase.py
 
 # Test API endpoints locally
+# Note: Requires Netlify dev server to be running (use 'just dev' in another terminal)
 test-api:
     @echo "🧪 Testing API endpoints..."
+    @if ! curl -s http://localhost:8888 >/dev/null 2>&1; then \
+        echo "❌ Error: Netlify dev server is not running on port 8888"; \
+        echo "   Start it with: just dev"; \
+        exit 1; \
+    fi
     @echo "GET /api/recipes"
-    @curl -s http://localhost:8888/api/recipes | head -20
+    @curl -s http://localhost:8888/api/recipes | head -20 || echo "❌ Failed to fetch recipes"
     @echo "\n\nGET /api/recipe-detail/1"
-    @curl -s http://localhost:8888/api/recipe-detail/1 | head -20
+    @curl -s http://localhost:8888/api/recipe-detail/1 | head -20 || echo "❌ Failed to fetch recipe detail"
 
 # Test shopping list endpoint
+# Note: Requires Netlify dev server to be running (use 'just dev' in another terminal)
 test-shopping-list:
     @echo "🧪 Testing shopping list generation..."
+    @if ! curl -s http://localhost:8888 >/dev/null 2>&1; then \
+        echo "❌ Error: Netlify dev server is not running on port 8888"; \
+        echo "   Start it with: just dev"; \
+        exit 1; \
+    fi
     @curl -X POST http://localhost:8888/api/shopping-list \
         -H "Content-Type: application/json" \
         -d '{"recipe_ids":[1,2],"exclude_pantry":false}' \
-        | python -m json.tool
+        -s \
+        | python -m json.tool 2>/dev/null || echo "❌ Failed to generate shopping list. Check server logs."
 
 # Lint and format (if tools are available)
 lint:
@@ -81,17 +106,47 @@ clean:
 # Deploy to Netlify (requires Netlify CLI and authentication)
 deploy:
     @echo "🚀 Deploying to Netlify..."
-    netlify deploy --prod
+    @if command -v netlify >/dev/null 2>&1; then \
+        netlify deploy --prod; \
+    elif [ -f "/c/usr/local/netlify" ]; then \
+        /c/usr/local/netlify deploy --prod; \
+    elif command -v npx >/dev/null 2>&1; then \
+        npx --yes netlify-cli deploy --prod; \
+    else \
+        echo "❌ Error: Netlify CLI is not installed"; \
+        echo "   Install it with: just install-netlify"; \
+        exit 1; \
+    fi
 
 # Deploy preview (for testing before production)
 deploy-preview:
     @echo "🚀 Creating preview deployment..."
-    netlify deploy
+    @if command -v netlify >/dev/null 2>&1; then \
+        netlify deploy; \
+    elif [ -f "/c/usr/local/netlify" ]; then \
+        /c/usr/local/netlify deploy; \
+    elif command -v npx >/dev/null 2>&1; then \
+        npx --yes netlify-cli deploy; \
+    else \
+        echo "❌ Error: Netlify CLI is not installed"; \
+        echo "   Install it with: just install-netlify"; \
+        exit 1; \
+    fi
 
 # Check Netlify status
 status:
     @echo "📊 Checking Netlify status..."
-    netlify status
+    @if command -v netlify >/dev/null 2>&1; then \
+        netlify status; \
+    elif [ -f "/c/usr/local/netlify" ]; then \
+        /c/usr/local/netlify status; \
+    elif command -v npx >/dev/null 2>&1; then \
+        npx --yes netlify-cli status; \
+    else \
+        echo "❌ Error: Netlify CLI is not installed"; \
+        echo "   Install it with: just install-netlify"; \
+        exit 1; \
+    fi
 
 # Show environment variables (without values for security)
 env-show:
