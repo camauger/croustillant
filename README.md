@@ -1,6 +1,6 @@
 # 🍳 Croustillant - Modern Serverless Version
 
-A modern, serverless recipe management application built with Netlify Functions and Supabase.
+A modern, serverless recipe management application built with Netlify Functions and Neon DB.
 
 ## ✨ Features
 
@@ -24,7 +24,7 @@ A modern, serverless recipe management application built with Netlify Functions 
 ### Tech Stack
 - **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
 - **Backend**: Netlify Functions (Python)
-- **Database**: Supabase (PostgreSQL)
+- **Database**: Neon DB (Serverless PostgreSQL)
 - **Hosting**: Netlify (Static + Serverless)
 - **Storage**: LocalStorage (user preferences)
 
@@ -44,10 +44,10 @@ A modern, serverless recipe management application built with Netlify Functions 
 └─────────────────┬───────────────────────┘
                   │
 ┌─────────────────┴───────────────────────┐
-│  Supabase (Backend-as-a-Service)        │
-│  ├── PostgreSQL Database                │
-│  ├── Storage (for images)               │
-│  └── Real-time subscriptions            │
+│  Neon DB (Serverless PostgreSQL)        │
+│  ├── Automatic Scaling                  │
+│  ├── Connection Pooling                 │
+│  └── Generous Free Tier                 │
 └─────────────────────────────────────────┘
 ```
 
@@ -66,11 +66,6 @@ croustillant/
 │       ├── router.js           # Client-side router
 │       ├── app.js              # Main application
 │       └── components/         # UI components
-│           ├── recipes-list.js
-│           ├── recipe-detail.js
-│           ├── recipe-form.js
-│           ├── selection.js
-│           └── shopping-list.js
 │
 ├── netlify/
 │   └── functions/              # Serverless API
@@ -82,15 +77,10 @@ croustillant/
 │           ├── db.py           # Database utilities
 │           └── ingredients.py  # Ingredient processing
 │
-├── migration/                  # Migration tools
-│   ├── migrate-to-supabase.py  # SQLite to Supabase
-│   └── requirements.txt
-│
 ├── netlify.toml                # Netlify configuration
-├── supabase-schema.sql         # Database schema
+├── neon-schema.sql             # Database schema
 ├── .env.example                # Environment variables template
-├── DEPLOYMENT.md               # Deployment guide
-└── CLAUDE.MD                   # AI assistant documentation
+└── README.md                   # This file
 ```
 
 ## 🚀 Quick Start
@@ -103,25 +93,26 @@ git clone <your-repo-url>
 cd croustillant
 ```
 
-#### 2. Set Up Supabase
-1. Create account at [supabase.com](https://supabase.com)
-2. Click **"New Project"** and create a new project
-3. Once project is ready, click **"SQL Editor"** in the left sidebar
-4. Open the `supabase-schema.sql` file from your project
-5. **Important**: Select and copy ONLY the SQL code (starting with `-- Croustillant Database Schema...`), NOT the filename
-6. Paste the SQL code into the Supabase SQL Editor
-7. Click **"Run"** button - you should see "Success. No rows returned"
-8. Get API credentials:
-   - Go to **"Project Settings"** (gear icon in sidebar)
-   - Click **"API"** tab
-   - Copy the **Project URL** and **anon/public key**
+#### 2. Set Up Neon DB
+1. Create a free account at [Neon](https://neon.tech)
+2. Click **"Create Project"**
+3. Choose a region close to your users
+4. Once created, click **"SQL Editor"** in the sidebar
+5. Open the `neon-schema.sql` file from your project
+6. Copy the entire SQL content and paste it into the Neon SQL Editor
+7. Click **"Run"** - you should see a success message
+8. Get your connection string:
+   - Go to **"Dashboard"**
+   - Click **"Connection Details"**
+   - Copy the **Connection String** (it includes everything you need)
 
 #### 3. Configure Environment
 Create `.env` file:
 ```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
+DATABASE_URL=postgresql://user:password@ep-cool-darkness-123456.us-east-2.aws.neon.tech/neondb?sslmode=require
 ```
+
+**Important**: Replace with your actual Neon connection string!
 
 #### 4. Install Netlify CLI
 ```bash
@@ -137,30 +128,48 @@ Visit `http://localhost:8888`
 
 ### Production Deployment
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide.
+#### Quick Deployment to Netlify
 
-Quick steps:
-1. Push code to GitHub/GitLab
-2. Connect repository to Netlify
-3. Set environment variables in Netlify
-4. Deploy!
+1. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Migrate to Neon DB"
+   git push origin main
+   ```
+
+2. **Connect to Netlify**
+   - Go to [Netlify](https://netlify.com)
+   - Click "Add new site" → "Import an existing project"
+   - Connect your GitHub repository
+   - Configure build settings:
+     - **Build command**: `echo "No build needed"`
+     - **Publish directory**: `public`
+     - **Functions directory**: `netlify/functions`
+
+3. **Set Environment Variables**
+   - In Netlify dashboard, go to **Site settings** → **Environment variables**
+   - Add `DATABASE_URL` with your Neon connection string
+
+4. **Deploy!**
+   - Click "Deploy site"
+   - Your app will be live in ~30 seconds
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
 **Required**:
-- `SUPABASE_URL`: Your Supabase project URL
-- `SUPABASE_KEY`: Supabase anon/public key
+- `DATABASE_URL`: Your Neon PostgreSQL connection string
 
 **Optional**:
 - `ENABLE_AUTH`: Enable authentication (future feature)
 
-### User Preferences
+### Neon DB Connection Pooling
 
-Stored in browser LocalStorage:
-- `excludePantryItems`: Exclude common pantry items from shopping list
-- Selected recipe IDs
+Neon automatically handles connection pooling. For optimal performance in serverless environments:
+- Use the connection string with `?sslmode=require`
+- Connection pooling is managed by the psycopg2 pool in `utils/db.py`
+- Default: min 1, max 10 connections per function instance
 
 ## 📊 Database Schema
 
@@ -202,63 +211,15 @@ Stored in browser LocalStorage:
 ]
 ```
 
-## 🎨 Features in Detail
+## 🔐 Security Features
 
-### Smart Shopping List Generation
+### Improvements in This Version
 
-The shopping list generator includes:
-
-1. **Unit Conversion**
-   - Automatic conversion to base units (ml, grams)
-   - Converts between metric and imperial
-   - Supported units: cups, tbsp, tsp, oz, lb, ml, l, g, kg
-
-2. **Smart Aggregation**
-   - Combines identical ingredients across recipes
-   - Handles different unit systems
-   - Groups by category
-
-3. **Categorization**
-   - Dairy products
-   - Meats and fish
-   - Fruits and vegetables
-   - Grains and breads
-   - Condiments and spices
-   - Canned goods
-   - Frozen items
-   - Other
-
-4. **Practical Quantities**
-   - Rounds to sensible amounts
-   - Whole numbers for countable items
-   - Decimal precision for measurements
-
-### Recipe Search
-
-- Full-text search on title and instructions
-- Case-insensitive matching
-- Real-time results
-
-### Recipe Selection
-
-- Stored in browser LocalStorage
-- Persists between sessions
-- Visual badge showing count
-- Quick add/remove buttons
-
-## 🔐 Security
-
-### Current Setup
-- Public access (no authentication)
-- Read and write operations available to all
-- Suitable for personal/trusted use
-
-### Future Authentication
-Plans to add:
-- Supabase Auth integration
-- User accounts
-- Private recipe collections
-- Row Level Security policies
+- ✅ **SQL Injection Prevention**: All queries use parameterized statements
+- ✅ **Input Validation**: Comprehensive validation on all endpoints
+- ✅ **Error Handling**: Sanitized error messages (no internal details exposed)
+- ✅ **Connection Pooling**: Efficient database connection management
+- ✅ **CORS Headers**: Configured for API access
 
 ## 📈 Performance
 
@@ -268,11 +229,13 @@ Plans to add:
 - Database indexes on frequently queried fields
 - JSONB for efficient ingredient queries
 - Edge caching via Netlify CDN
+- Connection pooling for database efficiency
 
-### Metrics (Target)
-- First Contentful Paint: < 1s
-- Time to Interactive: < 2s
-- Function execution: < 500ms
+### Neon DB Benefits
+- **Serverless Autoscaling**: Automatically scales with traffic
+- **Instant Cold Starts**: Database wakes up in <500ms
+- **Generous Free Tier**: 0.5 GB storage, 100 hours compute/month
+- **High Availability**: Built on AWS with automatic backups
 
 ## 🧪 Testing Locally
 
@@ -305,84 +268,33 @@ curl -X POST http://localhost:8888/api/shopping-list \
 - Ensure Python dependencies are installed
 
 **Database connection errors**
-- Verify Supabase credentials
-- Check database table exists
-- Test connection from Supabase dashboard
-
-**SQL syntax error when running schema**
-- Make sure you copied ONLY the SQL code from `supabase-schema.sql`, not the filename
-- The SQL should start with `-- Croustillant Database Schema` and end with the COMMENT statements
-- If you see "syntax error at or near 'supabase'", you likely included the filename - try copying again
-- Clear the SQL Editor completely before pasting fresh SQL code
-
-**Permission denied for schema public error**
-- **Important**: Make sure you're using the **SQL Editor** in Supabase dashboard (not the API)
-- The SQL Editor runs as the postgres superuser and should have all permissions
-- If you still get this error:
-  1. In Supabase dashboard, go to **SQL Editor**
-  2. Make sure you're in the correct project
-  3. Try running this first (to grant permissions):
-     ```sql
-     GRANT USAGE ON SCHEMA public TO postgres;
-     GRANT CREATE ON SCHEMA public TO postgres;
-     ```
-  4. Then run the full schema SQL again
-- Alternative: Use Supabase's **Table Editor** → **New Table** and create manually, or use the **Database** → **Migrations** feature
+- Verify DATABASE_URL is correct
+- Check Neon project is active (not suspended)
+- Test connection from Neon dashboard
 
 **LocalStorage issues**
 - Clear browser cache
 - Check browser console for errors
 - Verify LocalStorage is not disabled
 
-## 🤝 Contributing
+## 💰 Cost Estimation
 
-### Development Workflow
-1. Create feature branch
-2. Make changes
-3. Test locally with `netlify dev`
-4. Push to repository
-5. Create pull request
+### Neon DB Free Tier
+- **Storage**: 0.5 GB
+- **Compute**: 100 hours/month
+- **Branches**: 10 project branches
+- **Data Transfer**: Included
 
-### Code Style
-- JavaScript: ES6+ features, async/await
-- Python: PEP 8 style guide
-- CSS: BEM-like naming convention
+For a personal recipe app: **$0/month** (within free tier)
 
-## 📝 Migration from Old Version
+### Netlify Free Tier
+- **Bandwidth**: 100 GB/month
+- **Build Minutes**: 300 minutes/month
+- **Functions**: 125K requests/month, 100 hours runtime
 
-To migrate from Flask/SQLite version:
+For a personal recipe app: **$0/month** (within free tier)
 
-1. Run migration script:
-```bash
-cd migration
-pip install -r requirements.txt
-python migrate-to-supabase.py
-```
-
-2. Verify data in Supabase dashboard
-3. Deploy new version
-4. Update bookmarks/links
-
-## 🔮 Future Enhancements
-
-### Planned Features
-- [ ] User authentication
-- [ ] Recipe ratings and reviews
-- [ ] Meal planning calendar
-- [ ] Nutritional information
-- [ ] Recipe sharing
-- [ ] Mobile app (PWA)
-- [ ] Offline support
-- [ ] Recipe import from URLs
-- [ ] Multi-language support
-- [ ] Dark mode
-
-### Community Requests
-- Recipe collections/folders
-- Collaborative meal planning
-- Grocery store integration
-- Recipe scaling
-- Print-optimized views
+**Total Cost**: **$0/month** for typical personal use! 🎉
 
 ## 📄 License
 
@@ -391,15 +303,15 @@ MIT License - See LICENSE file for details
 ## 🙏 Acknowledgments
 
 - Built with [Netlify](https://netlify.com)
-- Database powered by [Supabase](https://supabase.com)
+- Database powered by [Neon](https://neon.tech)
 - Icons from emoji set
 
 ## 📞 Support
 
-- Documentation: See DEPLOYMENT.md and CLAUDE.MD
+- Documentation: See this README
 - Issues: GitHub Issues
 - Discussions: GitHub Discussions
 
 ---
 
-**Made with ❤️ and modernized for the cloud**
+**Made with ❤️ and optimized for serverless**
