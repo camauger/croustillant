@@ -3,7 +3,7 @@ Netlify Function: Recipe Detail API
 Handles GET (single recipe), PUT (update), DELETE (delete)
 """
 import json
-from utils.db import get_supabase_client, format_response, handle_error
+from utils.db import execute_query, execute_update, execute_delete, format_response, handle_error
 
 def handler(event, context):
     """Main handler for recipe detail endpoint"""
@@ -13,8 +13,6 @@ def handler(event, context):
         return format_response(200, {})
 
     try:
-        supabase = get_supabase_client()
-
         # Extract recipe ID from path
         path = event.get('path', '')
         recipe_id = path.split('/')[-1]
@@ -29,15 +27,15 @@ def handler(event, context):
 
         # GET: Get single recipe
         if event['httpMethod'] == 'GET':
-            return get_recipe(supabase, recipe_id)
+            return get_recipe(recipe_id)
 
         # PUT: Update recipe
         elif event['httpMethod'] == 'PUT':
-            return update_recipe(supabase, recipe_id, event)
+            return update_recipe(recipe_id, event)
 
         # DELETE: Delete recipe
         elif event['httpMethod'] == 'DELETE':
-            return delete_recipe(supabase, recipe_id)
+            return delete_recipe_handler(recipe_id)
 
         else:
             return format_response(405, {
@@ -48,12 +46,13 @@ def handler(event, context):
     except Exception as e:
         return handle_error(e)
 
-def get_recipe(supabase, recipe_id):
+def get_recipe(recipe_id):
     """Get a single recipe by ID"""
     try:
-        response = supabase.table('recipes').select('*').eq('id', recipe_id).execute()
+        query = "SELECT * FROM recipes WHERE id = %s"
+        recipe = execute_query(query, (recipe_id,), fetch='one')
 
-        if not response.data:
+        if not recipe:
             return format_response(404, {
                 "error": "Recette non trouvée",
                 "success": False
@@ -61,21 +60,22 @@ def get_recipe(supabase, recipe_id):
 
         return format_response(200, {
             "success": True,
-            "recipe": response.data[0]
+            "recipe": recipe
         })
 
     except Exception as e:
         return handle_error(e)
 
-def update_recipe(supabase, recipe_id, event):
+def update_recipe(recipe_id, event):
     """Update an existing recipe"""
     try:
         # Parse request body
         body = json.loads(event['body'])
 
         # Check if recipe exists
-        existing = supabase.table('recipes').select('id').eq('id', recipe_id).execute()
-        if not existing.data:
+        check_query = "SELECT id FROM recipes WHERE id = %s"
+        existing = execute_query(check_query, (recipe_id,), fetch='one')
+        if not existing:
             return format_response(404, {
                 "error": "Recette non trouvée",
                 "success": False
@@ -83,34 +83,50 @@ def update_recipe(supabase, recipe_id, event):
 
         # Check for duplicate title (if title is being changed)
         if 'titre' in body:
-            duplicate = supabase.table('recipes').select('id').eq('titre', body['titre']).neq('id', recipe_id).execute()
-            if duplicate.data:
+            dup_query = "SELECT id FROM recipes WHERE titre = %s AND id != %s"
+            duplicate = execute_query(dup_query, (body['titre'], recipe_id), fetch='one')
+            if duplicate:
                 return format_response(409, {
                     "error": "Une autre recette avec ce titre existe déjà",
                     "success": False
                 })
 
         # Prepare update data (only include fields that are present)
-        update_data = {}
         allowed_fields = ['titre', 'temps_preparation', 'temps_cuisson', 'rendement',
                          'ingredients', 'instructions', 'image_url', 'category', 'tags']
 
+        update_fields = []
+        update_values = []
+
         for field in allowed_fields:
             if field in body:
-                update_data[field] = body[field]
+                update_fields.append(f"{field} = %s")
+                # Convert lists/dicts to JSON strings for JSONB fields
+                if field in ['ingredients', 'instructions']:
+                    update_values.append(json.dumps(body[field]))
+                else:
+                    update_values.append(body[field])
 
-        if not update_data:
+        if not update_fields:
             return format_response(400, {
                 "error": "No fields to update",
                 "success": False
             })
 
-        # Update recipe
-        response = supabase.table('recipes').update(update_data).eq('id', recipe_id).execute()
+        # Build and execute update query
+        update_query = f"""
+            UPDATE recipes
+            SET {', '.join(update_fields)}
+            WHERE id = %s
+            RETURNING *
+        """
+        update_values.append(recipe_id)
+
+        recipe = execute_update(update_query, tuple(update_values))
 
         return format_response(200, {
             "success": True,
-            "recipe": response.data[0],
+            "recipe": recipe,
             "message": "Recette mise à jour avec succès"
         })
 
@@ -122,19 +138,21 @@ def update_recipe(supabase, recipe_id, event):
     except Exception as e:
         return handle_error(e)
 
-def delete_recipe(supabase, recipe_id):
+def delete_recipe_handler(recipe_id):
     """Delete a recipe"""
     try:
         # Check if recipe exists
-        existing = supabase.table('recipes').select('id').eq('id', recipe_id).execute()
-        if not existing.data:
+        check_query = "SELECT id FROM recipes WHERE id = %s"
+        existing = execute_query(check_query, (recipe_id,), fetch='one')
+        if not existing:
             return format_response(404, {
                 "error": "Recette non trouvée",
                 "success": False
             })
 
         # Delete recipe
-        supabase.table('recipes').delete().eq('id', recipe_id).execute()
+        delete_query = "DELETE FROM recipes WHERE id = %s"
+        execute_delete(delete_query, (recipe_id,))
 
         return format_response(200, {
             "success": True,

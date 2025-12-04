@@ -3,7 +3,7 @@ Netlify Function: Shopping List API
 Generates shopping list from selected recipes
 """
 import json
-from utils.db import get_supabase_client, format_response, handle_error
+from utils.db import execute_query, format_response, handle_error
 from utils.ingredients import aggregate_ingredients, round_to_practical
 
 def handler(event, context):
@@ -14,10 +14,8 @@ def handler(event, context):
         return format_response(200, {})
 
     try:
-        supabase = get_supabase_client()
-
         if event['httpMethod'] == 'POST':
-            return generate_shopping_list(supabase, event)
+            return generate_shopping_list(event)
         else:
             return format_response(405, {
                 "error": "Method not allowed",
@@ -27,7 +25,7 @@ def handler(event, context):
     except Exception as e:
         return handle_error(e)
 
-def generate_shopping_list(supabase, event):
+def generate_shopping_list(event):
     """Generate shopping list from recipe IDs"""
     try:
         # Parse request body
@@ -43,16 +41,18 @@ def generate_shopping_list(supabase, event):
             })
 
         # Fetch selected recipes
-        response = supabase.table('recipes').select('*').in_('id', recipe_ids).execute()
+        # Use ANY with array to match recipe IDs
+        query = "SELECT * FROM recipes WHERE id = ANY(%s)"
+        recipes = execute_query(query, (recipe_ids,), fetch='all')
 
-        if not response.data:
+        if not recipes:
             return format_response(404, {
                 "error": "No recipes found",
                 "success": False
             })
 
         # Aggregate ingredients
-        categorized_ingredients = aggregate_ingredients(response.data, exclude_pantry)
+        categorized_ingredients = aggregate_ingredients(recipes, exclude_pantry)
 
         # Round quantities to practical amounts
         for category, ingredients in categorized_ingredients.items():
@@ -66,8 +66,8 @@ def generate_shopping_list(supabase, event):
             "success": True,
             "shopping_list": categorized_ingredients,
             "total_items": total_items,
-            "recipe_count": len(response.data),
-            "recipes": [{"id": r['id'], "titre": r['titre']} for r in response.data]
+            "recipe_count": len(recipes),
+            "recipes": [{"id": r['id'], "titre": r['titre']} for r in recipes]
         })
 
     except json.JSONDecodeError:

@@ -3,7 +3,7 @@ Netlify Function: Recipes API
 Handles GET (list all recipes) and POST (create new recipe)
 """
 import json
-from utils.db import get_supabase_client, format_response, handle_error
+from utils.db import execute_query, execute_insert, format_response, handle_error
 
 def handler(event, context):
     """Main handler for recipes endpoint"""
@@ -13,15 +13,13 @@ def handler(event, context):
         return format_response(200, {})
 
     try:
-        supabase = get_supabase_client()
-
         # GET: List all recipes
         if event['httpMethod'] == 'GET':
-            return get_recipes(supabase, event)
+            return get_recipes(event)
 
         # POST: Create new recipe
         elif event['httpMethod'] == 'POST':
-            return create_recipe(supabase, event)
+            return create_recipe(event)
 
         else:
             return format_response(405, {
@@ -32,7 +30,7 @@ def handler(event, context):
     except Exception as e:
         return handle_error(e)
 
-def get_recipes(supabase, event):
+def get_recipes(event):
     """Get all recipes with optional filtering"""
     try:
         # Parse query parameters
@@ -42,36 +40,41 @@ def get_recipes(supabase, event):
         limit = int(params.get('limit', 100))
         offset = int(params.get('offset', 0))
 
-        # Build query
-        query = supabase.table('recipes').select('*')
+        # Build SQL query
+        query = "SELECT * FROM recipes WHERE 1=1"
+        query_params = []
 
-        # Apply search filter
+        # Apply search filter (search in title and instructions)
         if search:
-            query = query.or_(f'titre.ilike.%{search}%,instructions.ilike.%{search}%')
+            query += " AND (titre ILIKE %s OR instructions::text ILIKE %s)"
+            search_pattern = f'%{search}%'
+            query_params.extend([search_pattern, search_pattern])
 
-        # Apply category filter (if implemented)
+        # Apply category filter
         if category:
-            query = query.eq('category', category)
-
-        # Apply pagination
-        query = query.range(offset, offset + limit - 1)
+            query += " AND category = %s"
+            query_params.append(category)
 
         # Order by creation date (newest first)
-        query = query.order('created_at', desc=True)
+        query += " ORDER BY created_at DESC"
+
+        # Apply pagination
+        query += " LIMIT %s OFFSET %s"
+        query_params.extend([limit, offset])
 
         # Execute query
-        response = query.execute()
+        recipes = execute_query(query, tuple(query_params), fetch='all')
 
         return format_response(200, {
             "success": True,
-            "recipes": response.data,
-            "count": len(response.data)
+            "recipes": recipes,
+            "count": len(recipes)
         })
 
     except Exception as e:
         return handle_error(e)
 
-def create_recipe(supabase, event):
+def create_recipe(event):
     """Create a new recipe"""
     try:
         # Parse request body
@@ -87,32 +90,42 @@ def create_recipe(supabase, event):
                 })
 
         # Check for duplicate recipe title
-        existing = supabase.table('recipes').select('id').eq('titre', body['titre']).execute()
-        if existing.data:
+        check_query = "SELECT id FROM recipes WHERE titre = %s"
+        existing = execute_query(check_query, (body['titre'],), fetch='one')
+        if existing:
             return format_response(409, {
                 "error": "Une recette avec ce titre existe déjà",
                 "success": False
             })
 
         # Prepare recipe data
-        recipe_data = {
-            'titre': body['titre'],
-            'temps_preparation': body.get('temps_preparation', ''),
-            'temps_cuisson': body.get('temps_cuisson', ''),
-            'rendement': body.get('rendement', ''),
-            'ingredients': body['ingredients'],
-            'instructions': body['instructions'],
-            'image_url': body.get('image_url', ''),
-            'category': body.get('category', ''),
-            'tags': body.get('tags', [])
-        }
+        insert_query = """
+            INSERT INTO recipes (
+                titre, temps_preparation, temps_cuisson, rendement,
+                ingredients, instructions, image_url, category, tags
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING *
+        """
+
+        recipe_params = (
+            body['titre'],
+            body.get('temps_preparation', ''),
+            body.get('temps_cuisson', ''),
+            body.get('rendement', ''),
+            json.dumps(body['ingredients']),
+            json.dumps(body['instructions']),
+            body.get('image_url', ''),
+            body.get('category', ''),
+            body.get('tags', [])
+        )
 
         # Insert recipe
-        response = supabase.table('recipes').insert(recipe_data).execute()
+        recipe = execute_insert(insert_query, recipe_params)
 
         return format_response(201, {
             "success": True,
-            "recipe": response.data[0],
+            "recipe": recipe,
             "message": "Recette créée avec succès"
         })
 
