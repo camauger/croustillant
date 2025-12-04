@@ -3,6 +3,10 @@
   publish = "public"
   functions = "netlify/functions"
 
+# Note: This project uses Python Netlify Functions, not Edge Functions
+# If you encounter Deno/Edge Functions errors, clear the cache with: just clear-deno-cache
+# Python runtime is specified in netlify/functions/runtime.txt
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

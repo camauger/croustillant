@@ -1,6 +1,9 @@
 # Croustillant Recipe Management App - Justfile
 # A modern serverless recipe management application
 
+# Set shell for Windows compatibility (uses Git Bash if available)
+set shell := ["bash", "-cu"]
+
 # Default recipe (run when `just` is called without arguments)
 default:
     @just --list
@@ -21,6 +24,27 @@ dev:
         echo "   Install it with: just install-netlify"; \
         echo "   Or manually: npm install -g netlify-cli"; \
         exit 1; \
+    fi
+
+# Development (PowerShell version - use if bash shell doesn't work)
+dev-ps:
+    @powershell.exe -Command "Write-Host '🚀 Starting Netlify dev server...'; if (Get-Command netlify -ErrorAction SilentlyContinue) { netlify dev } elseif (Get-Command npx -ErrorAction SilentlyContinue) { Write-Host '⚠️  Using npx to run netlify (not in PATH)'; npx --yes netlify-cli dev } else { Write-Host '❌ Error: Netlify CLI is not installed'; Write-Host '   Install it with: just install-netlify'; Write-Host '   Or manually: npm install -g netlify-cli'; exit 1 }"
+
+# Clear Netlify Deno cache (fixes EBUSY errors on Windows)
+clear-deno-cache:
+    @echo "🧹 Clearing Netlify Deno cache..."
+    @echo "Attempting to remove: C:\\Users\\camauger\\AppData\\Roaming\\netlify\\Config\\deno-cli"
+    @cmd.exe /c "if exist \"C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli\" (rmdir /s /q \"C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli\" && echo ✅ Cache cleared) else (echo ✅ Cache directory does not exist)"
+
+# Clear Netlify function cache (fixes JSON parsing errors)
+clear-netlify-cache:
+    @echo "🧹 Clearing Netlify function cache..."
+    @if [ -d ".netlify" ]; then \
+        echo "Removing .netlify cache directory..."; \
+        rm -rf .netlify 2>/dev/null || cmd.exe /c "rmdir /s /q .netlify 2>nul" || echo "⚠️  Could not clear .netlify directory"; \
+        echo "✅ Cache cleared"; \
+    else \
+        echo "✅ No .netlify cache directory found"; \
     fi
 
 # Install dependencies
