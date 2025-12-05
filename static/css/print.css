@@ -1,9 +1,0 @@
-/* print.css */
-body {
-    font-family: Arial, sans-serif;
-    color: #000;
-    background: #fff;
-}
-header, footer, nav {
-    display: none;
-}

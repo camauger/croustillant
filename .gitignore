@@ -30,12 +30,8 @@ wheels/
 *.egg
 
 # Netlify
+.netlify/
 .netlify.toml.bak
-
-# Flask (legacy)
-instance/
-.webassets-cache
-flask_session/
 
 # Database files
 *.db
@@ -43,7 +39,6 @@ flask_session/
 *.sqlite3
 *.db-shm
 *.db-wal
-recipes.db
 
 # Logs
 *.log
@@ -83,9 +78,5 @@ tmp/
 temp/
 .cache/
 
-# Local test files
-test-local/
-local-tests/
-
-# Local Netlify folder
-.netlify
+# Node modules (if any)
+node_modules/
