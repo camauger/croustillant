@@ -1,7 +1,11 @@
 [build]
   command = "echo 'No build command needed'"
   publish = "public"
-  functions = "netlify/functions"
+
+[functions]
+  # Directory with serverless functions to deploy
+  # This is an absolute path relative to the base directory
+  directory = "netlify/functions"
 
 [dev]
   # Disable Edge Functions - this project only uses Python Netlify Functions
