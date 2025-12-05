@@ -14,8 +14,8 @@
   edge_functions = []
 
 # Note: This project uses Python Netlify Functions, not Edge Functions
-# Each function has its own runtime.txt and requirements.txt in its folder
-# Functions are structured as: netlify/functions/{function-name}/handler.py
+# Functions are structured as flat files: netlify/functions/{function-name}.py
+# All functions share runtime.txt and requirements.txt in netlify/functions/
 
 [[redirects]]
   from = "/api/*"

@@ -4,10 +4,6 @@ Handles GET (list all recipes) and POST (create new recipe)
 """
 
 import json
-import os
-import sys
-
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils.db import execute_insert, execute_query, format_response, handle_error
 
 
@@ -157,3 +153,4 @@ def create_recipe(event):
         )
     except Exception as e:
         return handle_error(e)
+

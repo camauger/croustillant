@@ -4,10 +4,6 @@ Handles GET (single recipe), PUT (update), DELETE (delete)
 """
 
 import json
-import os
-import sys
-
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils.db import (
     execute_delete,
     execute_query,
@@ -187,3 +183,4 @@ def delete_recipe(recipe_id):
 
     except Exception as e:
         return handle_error(e)
+

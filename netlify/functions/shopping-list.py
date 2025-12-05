@@ -4,10 +4,6 @@ Generates shopping list from selected recipes
 """
 
 import json
-import os
-import sys
-
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils.db import execute_query, format_response, handle_error
 from utils.ingredients import aggregate_ingredients, round_to_practical
 
@@ -108,3 +104,4 @@ def generate_shopping_list(event):
         )
     except Exception as e:
         return handle_error(e)
+
