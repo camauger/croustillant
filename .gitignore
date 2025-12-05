@@ -86,3 +86,6 @@ temp/
 # Local test files
 test-local/
 local-tests/
+
+# Local Netlify folder
+.netlify
