@@ -1,12 +1,14 @@
-import os
 import json
+import os
+from contextlib import contextmanager
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
-from contextlib import contextmanager
 
 # Connection pool for reusing connections
 _connection_pool = None
+
 
 def get_connection_pool():
     """Get or create a connection pool"""
@@ -15,19 +17,20 @@ def get_connection_pool():
     if _connection_pool is None:
         # Support both DATABASE_URL and NETLIFY_DATABASE_URL
         # NETLIFY_DATABASE_URL takes precedence if both are set
-        database_url = os.environ.get("NETLIFY_DATABASE_URL") or os.environ.get("DATABASE_URL")
-
-        if not database_url:
-            raise ValueError("DATABASE_URL or NETLIFY_DATABASE_URL must be set in environment variables")
-
-        # Create a connection pool with min 1, max 10 connections
-        _connection_pool = SimpleConnectionPool(
-            minconn=1,
-            maxconn=10,
-            dsn=database_url
+        database_url = os.environ.get("NETLIFY_DATABASE_URL") or os.environ.get(
+            "DATABASE_URL"
         )
 
+        if not database_url:
+            raise ValueError(
+                "DATABASE_URL or NETLIFY_DATABASE_URL must be set in environment variables"
+            )
+
+        # Create a connection pool with min 1, max 10 connections
+        _connection_pool = SimpleConnectionPool(minconn=1, maxconn=10, dsn=database_url)
+
     return _connection_pool
+
 
 @contextmanager
 def get_db_connection():
@@ -47,6 +50,7 @@ def get_db_connection():
     finally:
         pool.putconn(conn)
 
+
 @contextmanager
 def get_db_cursor(cursor_factory=RealDictCursor):
     """
@@ -60,13 +64,14 @@ def get_db_cursor(cursor_factory=RealDictCursor):
         finally:
             cursor.close()
 
+
 def format_response(status_code: int, body: dict, headers: dict = None) -> dict:
     """Format response for Netlify Functions"""
     default_headers = {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS"
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     }
 
     if headers:
@@ -75,8 +80,9 @@ def format_response(status_code: int, body: dict, headers: dict = None) -> dict:
     return {
         "statusCode": status_code,
         "headers": default_headers,
-        "body": json.dumps(body, ensure_ascii=False, default=str)
+        "body": json.dumps(body, ensure_ascii=False, default=str),
     }
+
 
 def handle_error(error: Exception, status_code: int = 500) -> dict:
     """Handle errors consistently"""
@@ -86,32 +92,35 @@ def handle_error(error: Exception, status_code: int = 500) -> dict:
     # Don't expose internal errors in production
     user_message = "An internal error occurred" if status_code == 500 else error_message
 
-    return format_response(status_code, {
-        "error": user_message,
-        "success": False
-    })
+    return format_response(status_code, {"error": user_message, "success": False})
 
-def execute_query(query: str, params: tuple = None, fetch_one: bool = False):
+
+def execute_query(
+    query: str, params: tuple = None, fetch_one: bool = False, fetch: str = None
+):
     """
     Execute a SELECT query and return results
 
     Args:
         query: SQL query string with %s placeholders
         params: Tuple of parameters to substitute
-        fetch_one: If True, return single row; if False, return all rows
+        fetch_one: If True, return single row; if False, return all rows (deprecated, use fetch instead)
+        fetch: 'one' for single row, 'all' for all rows (takes precedence over fetch_one)
 
     Returns:
-        Single dict (fetch_one=True) or list of dicts
+        Single dict (fetch='one' or fetch_one=True) or list of dicts
     """
     with get_db_cursor() as cursor:
         cursor.execute(query, params or ())
 
-        if fetch_one:
+        # Support both new 'fetch' parameter and old 'fetch_one' parameter
+        if fetch == "one" or (fetch is None and fetch_one):
             result = cursor.fetchone()
             return dict(result) if result else None
         else:
             results = cursor.fetchall()
             return [dict(row) for row in results]
+
 
 def execute_insert(query: str, params: tuple = None, returning: bool = True):
     """
@@ -132,6 +141,7 @@ def execute_insert(query: str, params: tuple = None, returning: bool = True):
             result = cursor.fetchone()
             return dict(result) if result else None
         return None
+
 
 def execute_update(query: str, params: tuple = None, returning: bool = True):
     """
@@ -154,6 +164,7 @@ def execute_update(query: str, params: tuple = None, returning: bool = True):
                 return dict(results[0])
             return [dict(row) for row in results]
         return None
+
 
 def execute_delete(query: str, params: tuple = None):
     """
