@@ -10,8 +10,13 @@ default:
 
 # Development
 # Start local development server with Netlify CLI
+# Clears Deno cache and kills processes before starting to avoid EBUSY errors
 dev:
     @echo "🚀 Starting Netlify dev server..."
+    @echo "🧹 Killing Deno/Netlify processes and clearing cache..."
+    @just kill-deno-processes >/dev/null 2>&1 || true
+    @just clear-deno-cache >/dev/null 2>&1 || true
+    @echo "⚠️  Note: Edge Functions errors can be ignored - Python functions will work in production"
     @if command -v netlify >/dev/null 2>&1; then \
         netlify dev; \
     elif [ -f "/c/usr/local/netlify" ]; then \
@@ -28,13 +33,19 @@ dev:
 
 # Development (PowerShell version - use if bash shell doesn't work)
 dev-ps:
-    @powershell.exe -Command "Write-Host '🚀 Starting Netlify dev server...'; if (Get-Command netlify -ErrorAction SilentlyContinue) { netlify dev } elseif (Get-Command npx -ErrorAction SilentlyContinue) { Write-Host '⚠️  Using npx to run netlify (not in PATH)'; npx --yes netlify-cli dev } else { Write-Host '❌ Error: Netlify CLI is not installed'; Write-Host '   Install it with: just install-netlify'; Write-Host '   Or manually: npm install -g netlify-cli'; exit 1 }"
+    @powershell.exe -Command "Write-Host '🚀 Starting Netlify dev server...'; Write-Host '🧹 Killing Deno/Netlify processes...'; Get-Process | Where-Object {$_.ProcessName -like '*deno*' -or $_.ProcessName -like '*netlify*'} | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Write-Host '🧹 Clearing Deno cache...'; if (Test-Path 'C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli') { Remove-Item -Recurse -Force 'C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli' -ErrorAction SilentlyContinue }; Write-Host '⚠️  Note: Edge Functions errors can be ignored - Python functions will work in production'; if (Get-Command netlify -ErrorAction SilentlyContinue) { netlify dev } elseif (Get-Command npx -ErrorAction SilentlyContinue) { Write-Host '⚠️  Using npx to run netlify (not in PATH)'; npx --yes netlify-cli dev } else { Write-Host '❌ Error: Netlify CLI is not installed'; Write-Host '   Install it with: just install-netlify'; Write-Host '   Or manually: npm install -g netlify-cli'; exit 1 }"
+
+# Kill Deno and Netlify processes (fixes EBUSY errors on Windows)
+kill-deno-processes:
+    @echo "🔪 Killing Deno/Netlify processes..."
+    @powershell.exe -Command "Get-Process | Where-Object {$_.ProcessName -like '*deno*' -or $_.ProcessName -like '*netlify*'} | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host '✅ Processes killed (if any were running)'"
 
 # Clear Netlify Deno cache (fixes EBUSY errors on Windows)
+# Note: Run kill-deno-processes first to avoid EBUSY errors
 clear-deno-cache:
     @echo "🧹 Clearing Netlify Deno cache..."
     @echo "Attempting to remove: C:\\Users\\camauger\\AppData\\Roaming\\netlify\\Config\\deno-cli"
-    @cmd.exe /c "if exist \"C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli\" (rmdir /s /q \"C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli\" && echo ✅ Cache cleared) else (echo ✅ Cache directory does not exist)"
+    @cmd.exe /c "taskkill /F /IM deno.exe 2>nul & timeout /t 2 /nobreak >nul & if exist \"C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli\" (rmdir /s /q \"C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli\" 2>nul && echo ✅ Cache cleared) else (echo ✅ Cache directory does not exist)"
 
 # Clear Netlify function cache (fixes JSON parsing errors)
 clear-netlify-cache:
@@ -46,6 +57,22 @@ clear-netlify-cache:
     else \
         echo "✅ No .netlify cache directory found"; \
     fi
+
+# Debug: Check function files and configuration
+debug-functions:
+    @echo "🔍 Checking function configuration..."
+    @echo "Functions directory: netlify/functions"
+    @echo "Python files found:"
+    @ls -1 netlify/functions/*.py 2>/dev/null | sed 's|netlify/functions/||' || echo "  No Python files found"
+    @echo ""
+    @echo "Runtime file:"
+    @cat netlify/functions/runtime.txt 2>/dev/null || echo "  ❌ runtime.txt not found"
+    @echo ""
+    @echo "Requirements file:"
+    @cat netlify/functions/requirements.txt 2>/dev/null || echo "  ❌ requirements.txt not found"
+    @echo ""
+    @echo "Checking for handler functions:"
+    @grep -l "def handler" netlify/functions/*.py 2>/dev/null | sed 's|netlify/functions/||' | sed 's/^/  ✅ /' || echo "  ❌ No handler functions found"
 
 # Install dependencies
 # Install Python dependencies for Netlify functions and migration tools

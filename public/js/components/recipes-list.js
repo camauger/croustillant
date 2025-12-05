@@ -32,7 +32,14 @@ async function renderRecipesList() {
             showError('Erreur lors du chargement des recettes');
         }
     } catch (error) {
-        showError(`Erreur: ${error.message}`);
+        let errorMessage = error.message;
+
+        // Provide helpful context for local development issues
+        if (errorMessage.includes('fonctions Python') || errorMessage.includes('Function') || errorMessage.includes('non disponibles')) {
+            errorMessage += '<br><br><small>💡 <strong>Note pour le développement local:</strong> Les fonctions Python peuvent ne pas être disponibles localement à cause de problèmes avec Deno/Edge Functions. Elles fonctionneront correctement en production sur Netlify.</small>';
+        }
+
+        showError(errorMessage);
     }
 }
 
@@ -105,7 +112,7 @@ async function searchRecipes() {
             displayRecipes(data.recipes);
         }
     } catch (error) {
-        showError(`Erreur: ${error.message}`);
+        showError(`Erreur de recherche: ${error.message}`);
     }
 }
 

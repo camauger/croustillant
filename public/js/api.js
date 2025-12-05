@@ -17,7 +17,32 @@ class API {
                 }
             });
 
-            const data = await response.json();
+            // Check if response is JSON before parsing
+            const contentType = response.headers.get('content-type');
+            let data;
+
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    data = await response.json();
+                } catch (jsonError) {
+                    // If JSON parsing fails, try to get text for debugging
+                    const text = await response.text();
+                    console.error('Failed to parse JSON response:', text.substring(0, 200));
+                    throw new Error('Réponse invalide du serveur. Les fonctions Python ne sont peut-être pas disponibles localement.');
+                }
+            } else {
+                // Response is not JSON (probably HTML error page)
+                const text = await response.text();
+                console.error('Non-JSON response received:', text.substring(0, 200));
+
+                if (response.status === 404) {
+                    throw new Error('Fonction API non trouvée. Vérifiez que le serveur Netlify est démarré.');
+                } else if (response.status >= 500) {
+                    throw new Error('Erreur serveur. Les fonctions Python ne sont peut-être pas disponibles localement.');
+                } else {
+                    throw new Error(`Erreur HTTP ${response.status}: Réponse non-JSON reçue`);
+                }
+            }
 
             if (!response.ok) {
                 throw new Error(data.error || `HTTP error! status: ${response.status}`);
@@ -26,6 +51,12 @@ class API {
             return data;
         } catch (error) {
             console.error('API request failed:', error);
+
+            // Provide user-friendly error messages
+            if (error.message.includes('Function') || error.message.includes('Function n')) {
+                throw new Error('Les fonctions Python ne sont pas disponibles localement. Elles fonctionneront en production sur Netlify.');
+            }
+
             throw error;
         }
     }
