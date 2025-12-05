@@ -63,12 +63,15 @@ def get_recipes(event):
             query += " AND category = %s"
             query_params.append(category)
 
-        # Add ordering and pagination
-        query += " ORDER BY created_at DESC LIMIT %s OFFSET %s"
+        # Order by creation date (newest first)
+        query += " ORDER BY created_at DESC"
+
+        # Apply pagination
+        query += " LIMIT %s OFFSET %s"
         query_params.extend([limit, offset])
 
         # Execute query
-        recipes = execute_query(query, tuple(query_params))
+        recipes = execute_query(query, tuple(query_params), fetch='all')
 
         return format_response(200, {
             "success": True,
@@ -108,12 +111,8 @@ def create_recipe(event):
             })
 
         # Check for duplicate recipe title
-        existing = execute_query(
-            "SELECT id FROM recipes WHERE titre = %s",
-            (body['titre'],),
-            fetch_one=True
-        )
-
+        check_query = "SELECT id FROM recipes WHERE titre = %s"
+        existing = execute_query(check_query, (body['titre'],), fetch='one')
         if existing:
             return format_response(409, {
                 "error": "Une recette avec ce titre existe déjà",
@@ -130,7 +129,7 @@ def create_recipe(event):
             RETURNING *
         """
 
-        insert_params = (
+        recipe_params = (
             body['titre'],
             body.get('temps_preparation', ''),
             body.get('temps_cuisson', ''),
@@ -143,7 +142,7 @@ def create_recipe(event):
         )
 
         # Insert recipe
-        recipe = execute_insert(insert_query, insert_params, returning=True)
+        recipe = execute_insert(insert_query, recipe_params)
 
         return format_response(201, {
             "success": True,

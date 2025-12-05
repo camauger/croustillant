@@ -49,11 +49,8 @@ def handler(event, context):
 def get_recipe(recipe_id):
     """Get a single recipe by ID"""
     try:
-        recipe = execute_query(
-            "SELECT * FROM recipes WHERE id = %s",
-            (recipe_id,),
-            fetch_one=True
-        )
+        query = "SELECT * FROM recipes WHERE id = %s"
+        recipe = execute_query(query, (recipe_id,), fetch='one')
 
         if not recipe:
             return format_response(404, {
@@ -76,12 +73,8 @@ def update_recipe(recipe_id, event):
         body = json.loads(event['body'])
 
         # Check if recipe exists
-        existing = execute_query(
-            "SELECT id FROM recipes WHERE id = %s",
-            (recipe_id,),
-            fetch_one=True
-        )
-
+        check_query = "SELECT id FROM recipes WHERE id = %s"
+        existing = execute_query(check_query, (recipe_id,), fetch='one')
         if not existing:
             return format_response(404, {
                 "error": "Recette non trouvée",
@@ -90,11 +83,8 @@ def update_recipe(recipe_id, event):
 
         # Check for duplicate title (if title is being changed)
         if 'titre' in body:
-            duplicate = execute_query(
-                "SELECT id FROM recipes WHERE titre = %s AND id != %s",
-                (body['titre'], recipe_id),
-                fetch_one=True
-            )
+            dup_query = "SELECT id FROM recipes WHERE titre = %s AND id != %s"
+            duplicate = execute_query(dup_query, (body['titre'], recipe_id), fetch='one')
             if duplicate:
                 return format_response(409, {
                     "error": "Une autre recette avec ce titre existe déjà",
@@ -110,9 +100,9 @@ def update_recipe(recipe_id, event):
 
         for field in allowed_fields:
             if field in body:
-                update_fields.append(field)
-                # Convert lists/dicts to JSON for JSONB fields
-                if field in ['ingredients', 'instructions', 'tags']:
+                update_fields.append(f"{field} = %s")
+                # Convert lists/dicts to JSON strings for JSONB fields
+                if field in ['ingredients', 'instructions']:
                     update_values.append(json.dumps(body[field]))
                 else:
                     update_values.append(body[field])
@@ -123,17 +113,16 @@ def update_recipe(recipe_id, event):
                 "success": False
             })
 
-        # Build UPDATE query
-        set_clause = ', '.join([f"{field} = %s" for field in update_fields])
+        # Build and execute update query
         update_query = f"""
             UPDATE recipes
-            SET {set_clause}
+            SET {', '.join(update_fields)}
             WHERE id = %s
             RETURNING *
         """
-
         update_values.append(recipe_id)
-        recipe = execute_update(update_query, tuple(update_values), returning=True)
+
+        recipe = execute_update(update_query, tuple(update_values))
 
         return format_response(200, {
             "success": True,
@@ -149,16 +138,12 @@ def update_recipe(recipe_id, event):
     except Exception as e:
         return handle_error(e)
 
-def delete_recipe(recipe_id):
+def delete_recipe_handler(recipe_id):
     """Delete a recipe"""
     try:
         # Check if recipe exists
-        existing = execute_query(
-            "SELECT id FROM recipes WHERE id = %s",
-            (recipe_id,),
-            fetch_one=True
-        )
-
+        check_query = "SELECT id FROM recipes WHERE id = %s"
+        existing = execute_query(check_query, (recipe_id,), fetch='one')
         if not existing:
             return format_response(404, {
                 "error": "Recette non trouvée",
@@ -166,10 +151,8 @@ def delete_recipe(recipe_id):
             })
 
         # Delete recipe
-        rows_deleted = execute_delete(
-            "DELETE FROM recipes WHERE id = %s",
-            (recipe_id,)
-        )
+        delete_query = "DELETE FROM recipes WHERE id = %s"
+        execute_delete(delete_query, (recipe_id,))
 
         return format_response(200, {
             "success": True,

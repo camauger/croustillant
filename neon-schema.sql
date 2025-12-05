@@ -20,20 +20,19 @@ CREATE TABLE IF NOT EXISTS recipes (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes for performance
+-- Create index on title for faster searches
 CREATE INDEX IF NOT EXISTS idx_recipes_titre ON recipes(titre);
-CREATE INDEX IF NOT EXISTS idx_recipes_category ON recipes(category);
-CREATE INDEX IF NOT EXISTS idx_recipes_created_at ON recipes(created_at DESC);
 
--- Create GIN indexes for JSONB and array columns (better search performance)
+-- Create index on category
+CREATE INDEX IF NOT EXISTS idx_recipes_category ON recipes(category);
+
+-- Create GIN index on ingredients for faster JSON queries
 CREATE INDEX IF NOT EXISTS idx_recipes_ingredients ON recipes USING GIN (ingredients);
+
+-- Create GIN index on tags array
 CREATE INDEX IF NOT EXISTS idx_recipes_tags ON recipes USING GIN (tags);
 
--- Full-text search index on instructions (optional but recommended)
-CREATE INDEX IF NOT EXISTS idx_recipes_instructions_fts
-    ON recipes USING GIN (to_tsvector('french', instructions::text));
-
--- Create function to automatically update updated_at timestamp
+-- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -42,30 +41,20 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create trigger to automatically update updated_at on row updates
-DROP TRIGGER IF EXISTS update_recipes_updated_at ON recipes;
+-- Create trigger to automatically update updated_at
 CREATE TRIGGER update_recipes_updated_at
     BEFORE UPDATE ON recipes
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Optional: Add constraints for data validation
-ALTER TABLE recipes ADD CONSTRAINT check_titre_not_empty
-    CHECK (char_length(trim(titre)) > 0);
+-- Enable Row Level Security (RLS) - Optional, for multi-user support later
+-- ALTER TABLE recipes ENABLE ROW LEVEL SECURITY;
 
--- Comments for documentation
+-- Create policy to allow all operations for now (public access)
+-- For future: You can add authentication and create policies per user
+-- CREATE POLICY "Allow all operations" ON recipes FOR ALL USING (true);
+
 COMMENT ON TABLE recipes IS 'Stores cooking recipes with ingredients and instructions';
-COMMENT ON COLUMN recipes.id IS 'Primary key, auto-incrementing';
-COMMENT ON COLUMN recipes.titre IS 'Recipe title, must be unique';
-COMMENT ON COLUMN recipes.ingredients IS 'JSON array of ingredients with nom, quantité, and unité fields';
+COMMENT ON COLUMN recipes.ingredients IS 'JSON array of ingredients with nom, quantité, and unité';
 COMMENT ON COLUMN recipes.instructions IS 'JSON array of instruction steps';
 COMMENT ON COLUMN recipes.tags IS 'Array of tags for categorization and search';
-COMMENT ON COLUMN recipes.created_at IS 'Timestamp when recipe was created';
-COMMENT ON COLUMN recipes.updated_at IS 'Timestamp when recipe was last updated';
-
--- Success message
-DO $$
-BEGIN
-    RAISE NOTICE 'Schema created successfully! You can now use your Croustillant application with Neon DB.';
-END
-$$;
