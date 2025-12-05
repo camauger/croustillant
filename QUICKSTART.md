@@ -5,36 +5,36 @@ Get your modernized Croustillant app running in 10 minutes!
 ## What You'll Need
 - ✅ GitHub/GitLab account
 - ✅ Netlify account (free)
-- ✅ Supabase account (free)
+- ✅ Neon account (free, no credit card required)
 - ✅ 10 minutes
 
-## Step 1: Set Up Supabase (3 minutes)
+## Step 1: Set Up Neon DB (3 minutes)
 
 ### 1.1 Create Project
-1. Go to [supabase.com](https://supabase.com) and sign up
-2. Click **"New Project"**
+1. Go to [neon.tech](https://neon.tech) and sign up (free, no credit card)
+2. Click **"Create Project"**
 3. Enter:
    - **Name**: `croustillant`
-   - **Database Password**: Create a strong password (save it!)
-   - **Region**: Choose closest to you
-4. Click **"Create new project"** and wait 1-2 minutes
+   - **Region**: Choose closest to you (e.g., US East, EU West)
+   - **PostgreSQL version**: 16 (latest)
+4. Click **"Create"** and wait 30 seconds
 
-### 1.2 Create Database
+### 1.2 Create Database Schema
 1. Once project is ready, click **"SQL Editor"** in left sidebar
-2. Open `supabase-schema.sql` from your project
+2. Open `neon-schema.sql` from your project
 3. Copy entire contents
-4. Paste into SQL Editor
+4. Paste into Neon SQL Editor
 5. Click **"Run"**
-6. You should see "Success. No rows returned"
+6. You should see "Query executed successfully"
 
-### 1.3 Get API Keys
-1. Go to **"Project Settings"** (gear icon in sidebar)
-2. Click **"API"** tab
-3. Copy these two values (you'll need them):
-   - **Project URL**: `https://xxxxxxxxxxxxx.supabase.co`
-   - **anon/public key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+### 1.3 Get Connection String
+1. Go to **"Dashboard"** in Neon
+2. Click **"Connection Details"**
+3. Copy the **Connection String**
+4. It will look like: `postgresql://user:password@ep-xxxxx-xxxxx.region.aws.neon.tech/neondb?sslmode=require`
+5. **Save this** - you'll need it for Netlify!
 
-✅ **Supabase is ready!**
+✅ **Neon DB is ready!**
 
 ## Step 2: Deploy to Netlify (5 minutes)
 
@@ -60,13 +60,9 @@ git push -u origin main
    - **Publish directory**: `public`
    - **Functions directory**: `netlify/functions`
 6. Click **"Show advanced"** → **"New variable"**
-7. Add environment variables:
-   - Variable 1:
-     - **Key**: `SUPABASE_URL`
-     - **Value**: Your Supabase Project URL
-   - Variable 2:
-     - **Key**: `SUPABASE_KEY`
-     - **Value**: Your Supabase anon key
+7. Add environment variable:
+   - **Key**: `DATABASE_URL`
+   - **Value**: Your Neon connection string (from step 1.3)
 8. Click **"Deploy site"**
 
 ### 2.3 Wait for Deployment
@@ -110,23 +106,22 @@ git push -u origin main
 If you have recipes in the old SQLite database:
 
 ### Migration Steps
+See [NEON_MIGRATION.md](NEON_MIGRATION.md) for detailed migration instructions from Supabase or SQLite to Neon DB.
+
+For SQLite to Neon:
 ```bash
 # 1. Create .env file in project root
-echo "SUPABASE_URL=your-project-url" > .env
-echo "SUPABASE_SERVICE_KEY=your-service-key" >> .env
+echo "DATABASE_URL=your-neon-connection-string" > .env
 echo "SQLITE_DB=recipes.db" >> .env
 
-# 2. Install dependencies
-cd migration
-pip install -r requirements.txt
-
-# 3. Run migration
-python migrate-to-supabase.py
+# 2. Use pg_dump or create a custom migration script
+# See NEON_MIGRATION.md for detailed instructions
 ```
 
-The script will:
+The migration process will:
 - Read all recipes from SQLite
-- Upload to Supabase
+- Transform data to PostgreSQL format
+- Insert into Neon database
 - Report success/failures
 
 ✅ **Migration complete!**
@@ -171,14 +166,16 @@ Check out planned features in README-MODERN.md:
 ### App shows "Loading..." forever
 **Fix**: Check environment variables in Netlify
 1. Netlify dashboard → **Site settings** → **Environment variables**
-2. Verify `SUPABASE_URL` and `SUPABASE_KEY` are set correctly
-3. Click **"Deploy site"** to redeploy
+2. Verify `DATABASE_URL` is set correctly with your Neon connection string
+3. Make sure it includes `?sslmode=require`
+4. Click **"Deploy site"** to redeploy
 
 ### Can't create recipes
-**Fix**: Check Supabase database
-1. Go to Supabase dashboard
-2. **Table Editor** → Verify `recipes` table exists
-3. If not, re-run `supabase-schema.sql` in SQL Editor
+**Fix**: Check Neon database
+1. Go to Neon dashboard
+2. **SQL Editor** → Run `SELECT * FROM recipes LIMIT 1;` to verify table exists
+3. If not, re-run `neon-schema.sql` in SQL Editor
+4. Verify your `DATABASE_URL` is correct
 
 ### Functions returning errors
 **Fix**: Check Netlify function logs
@@ -198,14 +195,15 @@ Check out planned features in README-MODERN.md:
 ## Need Help?
 
 - **Documentation Issues**: Check DEPLOYMENT.md
-- **Technical Issues**: Check Netlify and Supabase logs
+- **Technical Issues**: Check Netlify and Neon logs
+- **Migration Help**: See NEON_MIGRATION.md
 - **Feature Requests**: Open an issue on GitHub
 
 ## Success! 🎉
 
 You now have a modern, scalable recipe app running on:
 - ✅ Netlify (99.9% uptime)
-- ✅ Supabase (managed PostgreSQL)
+- ✅ Neon DB (serverless PostgreSQL)
 - ✅ Free tier (suitable for personal use)
 - ✅ HTTPS enabled
 - ✅ Global CDN

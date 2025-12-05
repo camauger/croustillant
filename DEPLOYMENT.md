@@ -1,44 +1,40 @@
 # Deployment Guide - Croustillant on Netlify
 
 ## Overview
-This guide will help you deploy the modernized Croustillant application to Netlify with Supabase as the database backend.
+This guide will help you deploy the modernized Croustillant application to Netlify with Neon DB as the database backend.
 
 ## Prerequisites
 - Git repository (GitHub, GitLab, or Bitbucket)
 - Netlify account (free tier available)
-- Supabase account (free tier available)
+- Neon account (free tier available)
 
-## Step 1: Set Up Supabase Database
+## Step 1: Set Up Neon DB Database
 
-### 1.1 Create a Supabase Project
-1. Go to [supabase.com](https://supabase.com)
-2. Sign up or log in
-3. Click "New Project"
+### 1.1 Create a Neon Project
+1. Go to [neon.tech](https://neon.tech)
+2. Sign up or log in (free, no credit card required)
+3. Click "Create Project"
 4. Fill in project details:
    - Name: `croustillant`
-   - Database password: (save this securely)
-   - Region: Choose closest to your users
-5. Wait for project creation (1-2 minutes)
+   - Region: Choose closest to your users (e.g., US East, EU West)
+   - PostgreSQL version: 16 (latest)
+5. Click "Create" and wait for project creation (30 seconds)
 
 ### 1.2 Create Database Schema
-1. In your Supabase dashboard, go to "SQL Editor"
-2. Copy the contents of `supabase-schema.sql`
-3. Paste and click "Run"
-4. Verify tables are created in "Table Editor"
+1. In your Neon dashboard, click "SQL Editor" in the left sidebar
+2. Open your local `neon-schema.sql` file
+3. Copy the entire content
+4. Paste into the Neon SQL Editor
+5. Click "Run"
+6. You should see: "Query executed successfully"
+7. Verify tables are created by running: `SELECT * FROM recipes LIMIT 1;`
 
-### 1.3 Get API Credentials
-1. Go to "Project Settings" > "API"
-2. Save these values:
-   - **Project URL**: `https://xxxxx.supabase.co`
-   - **Anon/Public Key**: `eyJhbGc...` (public key)
-   - **Service Role Key**: `eyJhbGc...` (secret key - for migration only)
-
-### 1.4 Configure Row Level Security (Optional)
-For now, we'll allow public access. To enable later:
-```sql
-ALTER TABLE recipes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all operations" ON recipes FOR ALL USING (true);
-```
+### 1.3 Get Connection String
+1. Go to "Dashboard" in Neon
+2. Click "Connection Details"
+3. Copy the **Connection String**
+4. It will look like: `postgresql://user:password@ep-xxxxx-xxxxx.region.aws.neon.tech/neondb?sslmode=require`
+5. **Important**: Use the connection string with `?sslmode=require` for secure connections
 
 ## Step 2: Migrate Existing Data (Optional)
 
@@ -53,20 +49,22 @@ pip install -r requirements.txt
 ### 2.2 Configure Environment
 Create `.env` file in the project root:
 ```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key
+DATABASE_URL=postgresql://user:password@ep-xxxxx-xxxxx.region.aws.neon.tech/neondb?sslmode=require
 SQLITE_DB=recipes.db
 ```
 
+**Note**: If you're migrating from Supabase, see [NEON_MIGRATION.md](NEON_MIGRATION.md) for detailed instructions.
+
 ### 2.3 Run Migration
 ```bash
-python migration/migrate-to-supabase.py
+# For SQLite to Neon migration, you'll need to create a custom script
+# or use pg_dump/psql to export and import data
 ```
 
-The script will:
+The migration process will:
 - Read all recipes from SQLite
-- Transform data to Supabase format
-- Insert into Supabase database
+- Transform data to PostgreSQL format
+- Insert into Neon database
 - Report success/errors
 
 ## Step 3: Deploy to Netlify
@@ -85,13 +83,15 @@ The script will:
 ### 3.2 Configure Environment Variables
 In Netlify dashboard, go to "Site settings" > "Environment variables"
 
-Add these variables:
+Add this variable:
 ```
-SUPABASE_URL = https://your-project.supabase.co
-SUPABASE_KEY = your-anon-public-key
+DATABASE_URL = postgresql://user:password@ep-xxxxx-xxxxx.region.aws.neon.tech/neondb?sslmode=require
 ```
 
-**Important**: Use the **anon/public key**, NOT the service role key!
+**Important**:
+- Replace with your actual Neon connection string
+- Make sure it includes `?sslmode=require` for secure connections
+- Use the connection string from Neon dashboard (not a password reset)
 
 ### 3.3 Deploy
 1. Click "Deploy site"
@@ -141,9 +141,10 @@ Netlify provides:
 - Deploy notifications
 
 ### 5.3 Configure Backup (Recommended)
-Supabase provides:
-- Daily automatic backups (free tier: 7 days retention)
+Neon provides:
+- Automatic backups (point-in-time recovery)
 - Manual backups via dashboard
+- Database branching for safe testing
 
 ## Troubleshooting
 
@@ -157,13 +158,14 @@ Supabase provides:
 4. Ensure `requirements.txt` is in `netlify/functions/`
 
 ### Database Connection Errors
-**Problem**: "SUPABASE_URL must be set" error
+**Problem**: "DATABASE_URL must be set" error
 
 **Solutions**:
-1. Verify environment variables in Netlify
-2. Check that variables don't have trailing spaces
-3. Redeploy site after adding variables
-4. Use anon key, not service role key
+1. Verify `DATABASE_URL` is set in Netlify environment variables
+2. Check that the connection string is correct and includes `?sslmode=require`
+3. Verify your Neon project is active (not suspended)
+4. Test the connection string in Neon SQL Editor
+5. Redeploy site after adding/updating variables
 
 ### CORS Errors
 **Problem**: Browser shows CORS policy errors
@@ -178,25 +180,28 @@ Supabase provides:
 
 **Solutions**:
 1. Use absolute URLs for images
-2. Consider using Supabase Storage for images
+2. Consider using a CDN or image hosting service (e.g., Cloudinary, Imgur)
 3. Check image URL format in database
+4. Ensure image URLs are publicly accessible
 
 ### Migration Script Fails
 **Problem**: Migration script encounters errors
 
 **Solutions**:
 1. Check SQLite database exists and is readable
-2. Verify Supabase credentials in `.env`
-3. Check Supabase table exists (run schema first)
-4. Review error messages for specific issues
+2. Verify `DATABASE_URL` in `.env` is correct
+3. Check Neon table exists (run `neon-schema.sql` first)
+4. Verify connection string includes `?sslmode=require`
+5. Review error messages for specific issues
 
 ## Maintenance
 
 ### Regular Tasks
 - Monitor function execution logs
-- Check Supabase database size (500MB free tier limit)
+- Check Neon database size (0.5 GB free tier limit)
 - Review and optimize slow queries
 - Update dependencies periodically
+- Monitor Neon compute hours (100 hours/month free tier)
 
 ### Updating the Application
 1. Make changes locally
@@ -221,20 +226,20 @@ If deployment has issues:
 - Unlimited sites
 - 125k serverless function requests/month
 
-**Supabase Free**:
-- 500MB database
-- 1GB file storage
-- 2GB bandwidth
-- 50k monthly active users
+**Neon Free**:
+- 0.5 GB database storage
+- 100 compute hours/month
+- 10 project branches
+- Automatic backups
 
 ### When to Upgrade
 Upgrade if you exceed:
 - Netlify: 100GB bandwidth or 125k API calls
-- Supabase: 500MB data or 1GB files
+- Neon: 0.5 GB storage or 100 compute hours/month
 
 Paid plans start at:
 - Netlify: $19/month
-- Supabase: $25/month
+- Neon: $19/month (Pro plan)
 
 ## Security Considerations
 
@@ -245,11 +250,11 @@ Paid plans start at:
 
 ### Adding Authentication (Future)
 To restrict access:
-1. Enable Supabase Auth
+1. Implement authentication (e.g., Auth0, Clerk, or custom JWT)
 2. Add login/signup UI
 3. Update Netlify Functions to verify JWT tokens
-4. Enable Row Level Security in Supabase
-5. Create policies for authenticated users
+4. Add user_id column to recipes table
+5. Filter queries by authenticated user
 
 ## Performance Optimization
 
@@ -262,7 +267,8 @@ To restrict access:
 ### Backend
 - Database indexes on frequently queried fields
 - Efficient JSONB queries
-- Connection pooling via Supabase
+- Connection pooling via psycopg2 (min 1, max 10 connections)
+- Parameterized queries for security
 
 ### Future Improvements
 - Add caching headers
@@ -273,9 +279,10 @@ To restrict access:
 ## Support and Resources
 
 - **Netlify Docs**: https://docs.netlify.com
-- **Supabase Docs**: https://supabase.com/docs
+- **Neon Docs**: https://neon.tech/docs
 - **Netlify Functions Guide**: https://docs.netlify.com/functions/overview/
-- **Supabase Python Client**: https://github.com/supabase/supabase-py
+- **psycopg2 Documentation**: https://www.psycopg.org/docs/
+- **PostgreSQL Documentation**: https://www.postgresql.org/docs/
 
 ## Next Steps
 

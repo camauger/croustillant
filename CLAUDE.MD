@@ -11,7 +11,7 @@ Croustillant is a modern serverless recipe management application. Users can vie
 ### Current Architecture (v2.0)
 - **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
 - **Backend**: Netlify Functions (Python serverless)
-- **Database**: Supabase (PostgreSQL)
+- **Database**: Neon DB (Serverless PostgreSQL)
 - **Hosting**: Netlify (Static + Serverless)
 - **Storage**: Browser LocalStorage (user preferences)
 
@@ -40,15 +40,15 @@ Croustillant is a modern serverless recipe management application. Users can vie
 └─────────────────┬───────────────────────┘
                   │ PostgreSQL Protocol
 ┌─────────────────┴───────────────────────┐
-│  Supabase (Backend-as-a-Service)        │
-│  ├── PostgreSQL Database (500MB free)   │
-│  ├── Storage API (images)               │
-│  ├── Real-time subscriptions            │
-│  └── Authentication (future)            │
+│  Neon DB (Serverless PostgreSQL)        │
+│  ├── PostgreSQL Database (0.5 GB free)  │
+│  ├── Connection Pooling                │
+│  ├── Automatic Scaling                 │
+│  └── Branching Support                  │
 └─────────────────────────────────────────┘
 ```
 
-### Database Schema (Supabase)
+### Database Schema (Neon DB)
 
 **recipes table (PostgreSQL)**:
 - `id` (BIGSERIAL PRIMARY KEY) - Auto-incrementing ID
@@ -91,18 +91,19 @@ Croustillant is a modern serverless recipe management application. Users can vie
 - `recipes.py` - GET all recipes, POST create recipe
 - `recipe-detail.py` - GET/PUT/DELETE single recipe
 - `shopping-list.py` - POST generate smart shopping list
-- `utils/db.py` - Supabase client and response formatting
+- `utils/db.py` - PostgreSQL connection pool and response formatting
 - `utils/ingredients.py` - Unit conversion and categorization
-- `requirements.txt` - Python dependencies (supabase==2.3.0)
+- `requirements.txt` - Python dependencies (psycopg2-binary==2.9.9)
 
 **Infrastructure**:
 - `netlify.toml` - Netlify deployment configuration
-- `supabase-schema.sql` - Database schema and indexes
+- `neon-schema.sql` - Database schema and indexes
 - `.env.example` - Environment variables template
 
 **Migration**:
-- `migration/migrate-to-supabase.py` - SQLite to Supabase migration
+- `migration/migrate-to-supabase.py` - SQLite to Supabase migration (legacy, see NEON_MIGRATION.md)
 - `migration/requirements.txt` - Migration script dependencies
+- `NEON_MIGRATION.md` - Guide for migrating to Neon DB
 
 **Documentation**:
 - `DEPLOYMENT.md` - Complete deployment guide
@@ -279,8 +280,8 @@ Generate smart shopping list
 - CORS headers configured in `netlify.toml`
 
 **Environment Variables** (set in Netlify dashboard):
-- `SUPABASE_URL` - Supabase project URL (required)
-- `SUPABASE_KEY` - Supabase anon/public key (required)
+- `DATABASE_URL` - Neon PostgreSQL connection string (required)
+  - Format: `postgresql://user:password@ep-xxxxx-xxxxx.region.aws.neon.tech/neondb?sslmode=require`
 
 ## Development Workflow
 
@@ -291,7 +292,7 @@ npm install -g netlify-cli
 
 # 2. Set up environment variables
 cp .env.example .env
-# Edit .env with your Supabase credentials
+# Edit .env with your Neon DB connection string (DATABASE_URL)
 
 # 3. Run development server
 netlify dev
@@ -312,18 +313,21 @@ curl -X POST http://localhost:8888/api/shopping-list \
   -d '{"recipe_ids":[1,2],"exclude_pantry":false}'
 ```
 
-### Database Setup (Supabase)
-1. Create account at supabase.com
+### Database Setup (Neon DB)
+1. Create account at [neon.tech](https://neon.tech)
 2. Create new project
 3. Go to SQL Editor
-4. Run `supabase-schema.sql`
-5. Copy API credentials to `.env`
+4. Run `neon-schema.sql`
+5. Copy connection string from Dashboard → Connection Details
+6. Add to `.env` as `DATABASE_URL`
 
 ### Migration from Old Version
+See [NEON_MIGRATION.md](NEON_MIGRATION.md) for detailed migration instructions.
+
+For SQLite to Neon:
 ```bash
-cd migration
-pip install -r requirements.txt
-python migrate-to-supabase.py
+# Export from SQLite, then import to Neon using psql or Neon SQL Editor
+# See NEON_MIGRATION.md for step-by-step instructions
 ```
 
 ## Coding Conventions
@@ -380,8 +384,8 @@ python migrate-to-supabase.py
 4. Update navigation in `index.html`
 
 **Modifying database schema**:
-1. Update `supabase-schema.sql`
-2. Run SQL in Supabase dashboard
+1. Update `neon-schema.sql`
+2. Run SQL in Neon SQL Editor
 3. Update API functions to handle new fields
 4. Update frontend to display new data
 5. Create migration if needed
@@ -420,12 +424,12 @@ python migrate-to-supabase.py
 
 ### Future Authentication Implementation
 To add user accounts:
-1. Enable Supabase Authentication
+1. Implement authentication (e.g., Auth0, Clerk, or custom JWT)
 2. Add login/signup UI in frontend
 3. Verify JWT tokens in Netlify Functions
-4. Enable Row Level Security (RLS) in Supabase
-5. Create policies: `CREATE POLICY "Users see own recipes" ON recipes FOR SELECT USING (auth.uid() = user_id);`
-6. Add `user_id` column to recipes table
+4. Add `user_id` column to recipes table
+5. Filter queries by authenticated user in API functions
+6. Update database queries to include user filtering
 
 ## Performance Optimizations
 
@@ -441,7 +445,8 @@ To add user accounts:
 - ✅ Serverless (scales automatically)
 - ✅ Database indexes on frequently queried fields
 - ✅ JSONB for efficient JSON queries
-- ✅ Connection pooling via Supabase
+- ✅ Connection pooling via psycopg2 (min 1, max 10 connections)
+- ✅ Parameterized queries for security
 - 🔄 Could add: Redis caching for frequent queries
 
 ### Network
@@ -458,11 +463,11 @@ To add user accounts:
 - 125,000 function requests/month
 - 300 build minutes/month
 
-**Supabase Free**:
-- 500MB database storage
-- 1GB file storage
-- 2GB bandwidth/month
-- 50,000 monthly active users
+**Neon Free**:
+- 0.5 GB database storage
+- 100 compute hours/month
+- 10 project branches
+- Automatic backups
 
 ### Technical Limitations
 - No real-time collaboration (yet)
@@ -481,10 +486,11 @@ To add user accounts:
 - Ensure Python dependencies installed
 
 ### "Database connection failed"
-- Verify Supabase credentials in `.env`
-- Check Supabase project is active
-- Test connection from Supabase dashboard
-- Use anon key (not service role key)
+- Verify `DATABASE_URL` in `.env` is correct
+- Check that connection string includes `?sslmode=require`
+- Check Neon project is active (not suspended)
+- Test connection from Neon SQL Editor
+- Verify connection string format matches Neon requirements
 
 ### "Shopping list categories wrong"
 - Review `INGREDIENT_CATEGORIES` in ingredients.py
@@ -527,16 +533,18 @@ To add user accounts:
 Key differences:
 - Server-side sessions → Client-side LocalStorage
 - Jinja2 templates → JavaScript SPA
-- SQLite → PostgreSQL (Supabase)
+- SQLite → PostgreSQL (Neon DB)
 - Monolithic → Serverless functions
 - Heroku → Netlify
 
 Migration path:
-1. Run `migration/migrate-to-supabase.py`
-2. Deploy new version to Netlify
-3. Update bookmarks/links
-4. Keep old version running during transition
-5. Verify all recipes migrated correctly
+1. See [NEON_MIGRATION.md](NEON_MIGRATION.md) for detailed instructions
+2. Export data from SQLite
+3. Import to Neon DB
+4. Deploy new version to Netlify
+5. Update bookmarks/links
+6. Keep old version running during transition
+7. Verify all recipes migrated correctly
 
 ### Backward Compatibility
 - JSON data format is compatible
@@ -547,10 +555,12 @@ Migration path:
 ## Support and Resources
 
 - **Deployment Guide**: See DEPLOYMENT.md
-- **User Documentation**: See README-MODERN.md
+- **User Documentation**: See README.md
+- **Migration Guide**: See NEON_MIGRATION.md
 - **Netlify Docs**: https://docs.netlify.com
-- **Supabase Docs**: https://supabase.com/docs
-- **Python Supabase Client**: https://github.com/supabase/supabase-py
+- **Neon Docs**: https://neon.tech/docs
+- **psycopg2 Docs**: https://www.psycopg.org/docs/
+- **PostgreSQL Docs**: https://www.postgresql.org/docs/
 
 ## Summary for AI Assistants
 
@@ -558,10 +568,12 @@ When working on this project:
 1. This is a **serverless** architecture (not Flask anymore)
 2. Frontend is **Vanilla JavaScript** SPA (not Jinja2 templates)
 3. Backend is **Netlify Functions** (Python serverless)
-4. Database is **Supabase** PostgreSQL (not SQLite)
+4. Database is **Neon DB** (Serverless PostgreSQL, not SQLite or Supabase)
 5. Deployment is on **Netlify** (not Heroku)
-6. Focus on **unit conversion** and **categorization** for shopping lists
-7. Maintain **mobile-first** responsive design
+6. Uses **psycopg2** for PostgreSQL connections (not Supabase client)
+7. Environment variable is **DATABASE_URL** (not SUPABASE_URL/SUPABASE_KEY)
+8. Focus on **unit conversion** and **categorization** for shopping lists
+9. Maintain **mobile-first** responsive design
 8. Keep **no authentication** for simplicity (future enhancement)
 9. Test locally with `netlify dev`
 10. Always check DEPLOYMENT.md for deployment procedures

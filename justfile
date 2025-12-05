@@ -33,12 +33,26 @@ dev:
 
 # Development (PowerShell version - use if bash shell doesn't work)
 dev-ps:
-    @powershell.exe -Command "Write-Host '🚀 Starting Netlify dev server...'; Write-Host '🧹 Killing Deno/Netlify processes...'; Get-Process | Where-Object {$_.ProcessName -like '*deno*' -or $_.ProcessName -like '*netlify*'} | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Write-Host '🧹 Clearing Deno cache...'; if (Test-Path 'C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli') { Remove-Item -Recurse -Force 'C:\Users\camauger\AppData\Roaming\netlify\Config\deno-cli' -ErrorAction SilentlyContinue }; Write-Host '⚠️  Note: Edge Functions errors can be ignored - Python functions will work in production'; if (Get-Command netlify -ErrorAction SilentlyContinue) { netlify dev } elseif (Get-Command npx -ErrorAction SilentlyContinue) { Write-Host '⚠️  Using npx to run netlify (not in PATH)'; npx --yes netlify-cli dev } else { Write-Host '❌ Error: Netlify CLI is not installed'; Write-Host '   Install it with: just install-netlify'; Write-Host '   Or manually: npm install -g netlify-cli'; exit 1 }"
+    @just kill-deno-processes >/dev/null 2>&1 || true
+    @just clear-deno-cache >/dev/null 2>&1 || true
+    @echo "🚀 Starting Netlify dev server..."
+    @echo "⚠️  Note: Edge Functions errors can be ignored - Python functions will work in production"
+    @if command -v netlify >/dev/null 2>&1; then \
+        netlify dev; \
+    elif command -v npx >/dev/null 2>&1; then \
+        echo "⚠️  Using npx to run netlify (not in PATH)"; \
+        npx --yes netlify-cli dev; \
+    else \
+        echo "❌ Error: Netlify CLI is not installed"; \
+        echo "   Install it with: just install-netlify"; \
+        echo "   Or manually: npm install -g netlify-cli"; \
+        exit 1; \
+    fi
 
 # Kill Deno and Netlify processes (fixes EBUSY errors on Windows)
 kill-deno-processes:
     @echo "🔪 Killing Deno/Netlify processes..."
-    @powershell.exe -Command "Get-Process | Where-Object {$_.ProcessName -like '*deno*' -or $_.ProcessName -like '*netlify*'} | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host '✅ Processes killed (if any were running)'"
+    @cmd.exe /c "taskkill /F /IM deno.exe 2>nul & taskkill /F /IM netlify.exe 2>nul & echo ✅ Processes killed (if any were running)"
 
 # Clear Netlify Deno cache (fixes EBUSY errors on Windows)
 # Note: Run kill-deno-processes first to avoid EBUSY errors
@@ -73,6 +87,37 @@ debug-functions:
     @echo ""
     @echo "Checking for handler functions:"
     @grep -l "def handler" netlify/functions/*.py 2>/dev/null | sed 's|netlify/functions/||' | sed 's/^/  ✅ /' || echo "  ❌ No handler functions found"
+
+# Diagnostic complet - vérifie tout
+diagnostic:
+    @echo "🔍 DIAGNOSTIC COMPLET - Croustillant"
+    @echo ""
+    @echo "1. Serveur Netlify:"
+    @curl -s -o /dev/null -w "   Status: %{http_code}\n" http://localhost:8888 2>/dev/null || echo "   ❌ Serveur non démarré"
+    @echo ""
+    @echo "2. Fonctions API:"
+    @curl -s http://localhost:8888/api/recipes 2>/dev/null | head -c 100 | grep -q "success\|recipes\|error" && echo "   ✅ Accessibles" || echo "   ❌ Non disponibles ou erreur"
+    @echo ""
+    @echo "3. Configuration:"
+    @if [ -f .env ]; then echo "   ✅ .env existe"; else echo "   ❌ .env MANQUANT - Créez-le avec DATABASE_URL"; fi
+    @if [ -f netlify.toml ]; then echo "   ✅ netlify.toml existe"; else echo "   ❌ netlify.toml MANQUANT"; fi
+    @echo ""
+    @echo "4. Fonctions Python:"
+    @count=$$(ls -1 netlify/functions/*.py 2>/dev/null | wc -l | tr -d ' '); \
+    if [ "$$count" = "3" ]; then echo "   ✅ $$count fichiers trouvés"; else echo "   ❌ $$count fichiers (attendu: 3)"; fi
+    @echo ""
+    @echo "5. Variables d'environnement:"
+    @if [ -f .env ]; then \
+        if grep -q "DATABASE_URL" .env 2>/dev/null; then \
+            echo "   ✅ DATABASE_URL défini"; \
+        else \
+            echo "   ❌ DATABASE_URL manquant dans .env"; \
+        fi; \
+    else \
+        echo "   ❌ Fichier .env n'existe pas"; \
+    fi
+    @echo ""
+    @echo "=== FIN DU DIAGNOSTIC ==="
 
 # Install dependencies
 # Install Python dependencies for Netlify functions and migration tools
