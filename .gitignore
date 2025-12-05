@@ -30,7 +30,6 @@ wheels/
 *.egg
 
 # Netlify
-.netlify/
 .netlify.toml.bak
 
 # Flask (legacy)

@@ -1,0 +1,20 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Québec",
+			"country": {
+				"code": "CA",
+				"name": "Canada"
+			},
+			"subdivision": {
+				"code": "QC",
+				"name": "Quebec"
+			},
+			"timezone": "America/Toronto",
+			"latitude": 46.8801,
+			"longitude": -71.1927,
+			"postalCode": "G1C"
+		},
+		"timestamp": 1764900471389
+	}
+}
