@@ -3,6 +3,11 @@
   publish = "public"
   functions = "netlify/functions"
 
+[dev]
+  # Disable Edge Functions - this project only uses Python Netlify Functions
+  # This prevents Netlify CLI from trying to set up Deno
+  edge_functions = []
+
 # Note: This project uses Python Netlify Functions, not Edge Functions
 # If you encounter Deno/Edge Functions errors, clear the cache with: just clear-deno-cache
 # Python runtime is specified in netlify/functions/runtime.txt
