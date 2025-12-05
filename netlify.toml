@@ -1,6 +1,7 @@
 [build]
   command = "echo 'No build command needed'"
   publish = "public"
+  functions = "netlify/functions"
 
 [functions]
   # Directory with serverless functions to deploy
