@@ -37,14 +37,22 @@ def get_recipes(event):
         params = event.get('queryStringParameters') or {}
         search = params.get('search', '').strip()
         category = params.get('category', '').strip()
-        limit = int(params.get('limit', 100))
-        offset = int(params.get('offset', 0))
 
-        # Build SQL query
+        # Validate and sanitize limit/offset
+        try:
+            limit = min(int(params.get('limit', 100)), 1000)  # Cap at 1000
+            offset = max(int(params.get('offset', 0)), 0)  # No negative offsets
+        except ValueError:
+            return format_response(400, {
+                "error": "Invalid pagination parameters",
+                "success": False
+            })
+
+        # Build query with proper parameterization
         query = "SELECT * FROM recipes WHERE 1=1"
         query_params = []
 
-        # Apply search filter (search in title and instructions)
+        # Apply search filter (parameterized to prevent SQL injection)
         if search:
             query += " AND (titre ILIKE %s OR instructions::text ILIKE %s)"
             search_pattern = f'%{search}%'
@@ -88,6 +96,19 @@ def create_recipe(event):
                     "error": f"Missing required field: {field}",
                     "success": False
                 })
+
+        # Validate data types
+        if not isinstance(body['ingredients'], list):
+            return format_response(400, {
+                "error": "ingredients must be an array",
+                "success": False
+            })
+
+        if not isinstance(body['instructions'], (list, str)):
+            return format_response(400, {
+                "error": "instructions must be an array or string",
+                "success": False
+            })
 
         # Check for duplicate recipe title
         check_query = "SELECT id FROM recipes WHERE titre = %s"

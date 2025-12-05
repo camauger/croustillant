@@ -35,7 +35,7 @@ def handler(event, context):
 
         # DELETE: Delete recipe
         elif event['httpMethod'] == 'DELETE':
-            return delete_recipe_handler(recipe_id)
+            return delete_recipe(recipe_id)
 
         else:
             return format_response(405, {
@@ -156,7 +156,8 @@ def delete_recipe_handler(recipe_id):
 
         return format_response(200, {
             "success": True,
-            "message": "Recette supprimée avec succès"
+            "message": "Recette supprimée avec succès",
+            "rows_deleted": rows_deleted
         })
 
     except Exception as e:

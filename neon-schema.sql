@@ -1,10 +1,7 @@
--- Croustillant Database Schema for Supabase (PostgreSQL)
+-- Croustillant Database Schema for Neon DB (PostgreSQL)
+-- Execute this in your Neon SQL Editor: https://console.neon.tech
 
--- Grant permissions on public schema (if needed)
--- Note: In Supabase SQL Editor, you should be connected as postgres superuser
--- If you get permission errors, ensure you're using the SQL Editor (not API)
-
--- Enable UUID extension
+-- Enable UUID extension (optional for future use)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create recipes table

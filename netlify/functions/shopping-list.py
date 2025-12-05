@@ -40,10 +40,36 @@ def generate_shopping_list(event):
                 "success": False
             })
 
+        # Validate recipe_ids is a list
+        if not isinstance(recipe_ids, list):
+            return format_response(400, {
+                "error": "recipe_ids must be an array",
+                "success": False
+            })
+
+        # Limit number of recipes
+        if len(recipe_ids) > 50:
+            return format_response(400, {
+                "error": "Maximum 50 recipes allowed per shopping list",
+                "success": False
+            })
+
+        # Convert recipe_ids to integers and validate
+        try:
+            recipe_ids = [int(rid) for rid in recipe_ids]
+        except (ValueError, TypeError):
+            return format_response(400, {
+                "error": "Invalid recipe ID format",
+                "success": False
+            })
+
+        # Build query with IN clause
+        # Use %s placeholders for each ID to prevent SQL injection
+        placeholders = ', '.join(['%s'] * len(recipe_ids))
+        query = f"SELECT * FROM recipes WHERE id IN ({placeholders})"
+
         # Fetch selected recipes
-        # Use ANY with array to match recipe IDs
-        query = "SELECT * FROM recipes WHERE id = ANY(%s)"
-        recipes = execute_query(query, (recipe_ids,), fetch='all')
+        recipes = execute_query(query, tuple(recipe_ids))
 
         if not recipes:
             return format_response(404, {
