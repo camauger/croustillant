@@ -13,10 +13,12 @@ def get_connection_pool():
     global _connection_pool
 
     if _connection_pool is None:
-        database_url = os.environ.get("DATABASE_URL")
+        # Support both DATABASE_URL and NETLIFY_DATABASE_URL
+        # NETLIFY_DATABASE_URL takes precedence if both are set
+        database_url = os.environ.get("NETLIFY_DATABASE_URL") or os.environ.get("DATABASE_URL")
 
         if not database_url:
-            raise ValueError("DATABASE_URL must be set in environment variables")
+            raise ValueError("DATABASE_URL or NETLIFY_DATABASE_URL must be set in environment variables")
 
         # Create a connection pool with min 1, max 10 connections
         _connection_pool = SimpleConnectionPool(
