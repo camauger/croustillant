@@ -1,6 +1,6 @@
-import { json, err } from "./lib/http.mjs";
-import { queryAll } from "./lib/db.mjs";
-import { aggregateIngredients, roundToPractical } from "./lib/ingredients.mjs";
+import { json, err } from "../lib/http.mjs";
+import { queryAll } from "../lib/db.mjs";
+import { aggregateIngredients, roundToPractical } from "../lib/ingredients.mjs";
 
 export const handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
