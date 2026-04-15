@@ -82,6 +82,34 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_project_env() -> None:
+    """Charge `.env` à la racine du dépôt (sinon `DATABASE_URL` n'est pas visible pour le script)."""
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        env_path = REPO_ROOT / ".env"
+        if not env_path.is_file():
+            return
+        for raw in env_path.read_text(encoding="utf-8").splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip()
+            if val.startswith('"') and val.endswith('"'):
+                val = val[1:-1].replace('\\"', '"')
+            elif val.startswith("'") and val.endswith("'"):
+                val = val[1:-1]
+            if key and key not in os.environ:
+                os.environ[key] = val
+    else:
+        load_dotenv(REPO_ROOT / ".env")
+
+
 REQUEST_DELAY_SECONDS = 1.5
 
 # Timeouts (connect, read) — évite les blocages indéfinis sur serveurs lents
@@ -623,11 +651,12 @@ def insert_recipes_to_neon(
                 """
                 INSERT INTO recipes (
                     titre, temps_preparation, temps_cuisson, rendement,
-                    ingredients, instructions, image_url, category, tags
+                    ingredients, instructions, image_url, category, tags, source_url
                 )
                 VALUES (
                     %(titre)s, %(temps_preparation)s, %(temps_cuisson)s, %(rendement)s,
-                    %(ingredients)s, %(instructions)s, %(image_url)s, %(category)s, %(tags)s
+                    %(ingredients)s, %(instructions)s, %(image_url)s, %(category)s, %(tags)s,
+                    %(source_url)s
                 )
                 ON CONFLICT (titre) DO UPDATE SET
                     temps_preparation = EXCLUDED.temps_preparation,
@@ -637,7 +666,8 @@ def insert_recipes_to_neon(
                     instructions = EXCLUDED.instructions,
                     image_url = EXCLUDED.image_url,
                     category = EXCLUDED.category,
-                    tags = EXCLUDED.tags
+                    tags = EXCLUDED.tags,
+                    source_url = EXCLUDED.source_url
                 """,
                 {
                     "titre": recipe.titre,
@@ -649,6 +679,7 @@ def insert_recipes_to_neon(
                     "image_url": recipe.image_url,
                     "category": recipe.category,
                     "tags": recipe.tags,
+                    "source_url": recipe.source_url or "",
                 },
             )
             ok += 1
@@ -671,6 +702,8 @@ def insert_recipes_to_neon(
 
 
 def main() -> None:
+    load_project_env()
+
     parser = argparse.ArgumentParser(
         description="Import Chrome bookmark recipes into Croustillant (Neon DB)"
     )

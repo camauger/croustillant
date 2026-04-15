@@ -110,6 +110,7 @@ def update_recipe(recipe_id, event):
             "image_url",
             "category",
             "tags",
+            "source_url",
         ]
 
         update_fields = []

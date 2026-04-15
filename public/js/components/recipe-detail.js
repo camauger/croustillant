@@ -9,6 +9,7 @@ async function showRecipeDetail(recipeId) {
     modalTitle.textContent = 'Chargement...';
     modalContent.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
     modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
 
     try {
         const data = await api.getRecipe(recipeId);
@@ -17,6 +18,7 @@ async function showRecipeDetail(recipeId) {
             const recipe = data.recipe;
             modalTitle.textContent = recipe.titre;
             modalContent.innerHTML = createRecipeDetailHTML(recipe);
+            modal.querySelector('.modal-close')?.focus();
         } else {
             modalContent.innerHTML = '<p class="alert alert-error">Erreur lors du chargement de la recette</p>';
         }
@@ -72,6 +74,7 @@ function createRecipeDetailHTML(recipe) {
     `;
 
     return `
+        <div class="recipe-detail-inner">
         <div class="recipe-detail-header">
             ${imageHTML}
             <div class="recipe-meta">
@@ -102,6 +105,7 @@ function createRecipeDetailHTML(recipe) {
             <h2>Instructions</h2>
             ${instructionsHTML}
         </div>
+        </div>
     `;
 }
 
@@ -122,6 +126,7 @@ function formatIngredient(ingredient) {
 function closeModal() {
     const modal = document.getElementById('recipe-modal');
     modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
 }
 
 // Close modal when clicking outside

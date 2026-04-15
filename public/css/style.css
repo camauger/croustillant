@@ -1,3 +1,6 @@
+/* ------------------------------------------------------------------------- */
+/* Design tokens — Croustillant (consolidation identité chaude / cuisine)     */
+/* ------------------------------------------------------------------------- */
 :root {
     --primary-color: #e67e22;
     --primary-dark: #d35400;
@@ -13,6 +16,20 @@
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
     --radius: 8px;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --rhythm: 1rem;
+    --line-height-prose: 1.65;
+    --line-height-tight: 1.25;
+    --content-max: 1200px;
+    --prose-max: 65ch;
+    --focus-ring: 0 0 0 3px rgba(52, 152, 219, 0.45);
+    --focus-ring-invert: 0 0 0 3px rgba(255, 255, 255, 0.55);
+    --font-size-body: 1rem;
+    --font-size-sm: 0.9rem;
+    --font-size-lg: 1.125rem;
+    --font-size-h1: clamp(1.5rem, 4vw, 1.875rem);
+    --font-size-h2: clamp(1.15rem, 2.5vw, 1.35rem);
+    --touch-min: 44px;
 }
 
 * {
@@ -22,10 +39,62 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.6;
+    font-family: var(--font-sans);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-prose);
     color: var(--text-dark);
     background-color: var(--bg-light);
+}
+
+/* Liens / boutons : annuler outline classique au profit de :focus-visible */
+:focus {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--secondary-color);
+    outline-offset: 2px;
+}
+
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 10000;
+    padding: 0.75rem 1.25rem;
+    background: var(--text-dark);
+    color: var(--bg-white);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-hover);
+}
+
+.skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+    outline: 2px solid var(--bg-white);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .card:hover,
+    .recipe-card:hover {
+        transform: none;
+    }
+
+    .spinner {
+        animation: none;
+        opacity: 0.7;
+    }
 }
 
 /* Header */
@@ -40,7 +109,7 @@ header {
 }
 
 nav {
-    max-width: 1200px;
+    max-width: var(--content-max);
     margin: 0 auto;
     padding: 0 1rem;
     display: flex;
@@ -50,8 +119,9 @@ nav {
 }
 
 nav h1 {
-    font-size: 1.8rem;
+    font-size: var(--font-size-h1);
     font-weight: 700;
+    line-height: var(--line-height-tight);
 }
 
 nav ul {
@@ -65,14 +135,23 @@ nav a {
     color: white;
     text-decoration: none;
     font-weight: 500;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s, background-color 0.2s;
     padding: 0.5rem 1rem;
     border-radius: var(--radius);
+    min-height: var(--touch-min);
+    display: inline-flex;
+    align-items: center;
 }
 
 nav a:hover {
-    opacity: 0.8;
-    background-color: rgba(255, 255, 255, 0.1);
+    opacity: 0.9;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+nav a:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+    opacity: 1;
 }
 
 .badge {
@@ -87,9 +166,14 @@ nav a:hover {
 
 /* Main Container */
 main {
-    max-width: 1200px;
+    max-width: var(--content-max);
     margin: 2rem auto;
     padding: 0 1rem;
+}
+
+main:focus-visible {
+    outline: 2px solid var(--secondary-color);
+    outline-offset: 4px;
 }
 
 /* Cards */
@@ -181,6 +265,15 @@ main {
     background-color: var(--primary-dark);
 }
 
+.btn:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
 .btn-secondary {
     background-color: var(--secondary-color);
     color: white;
@@ -236,11 +329,11 @@ main {
     font-family: inherit;
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-    outline: none;
+.form-group input:focus-visible,
+.form-group textarea:focus-visible,
+.form-group select:focus-visible {
     border-color: var(--primary-color);
+    box-shadow: var(--focus-ring);
 }
 
 .form-group textarea {
@@ -331,6 +424,11 @@ main {
     font-size: 1rem;
 }
 
+.search-bar input:focus-visible {
+    border-color: var(--primary-color);
+    box-shadow: var(--focus-ring);
+}
+
 /* Loading Spinner */
 .loading {
     display: flex;
@@ -400,10 +498,11 @@ main {
     background: var(--bg-white);
     padding: 2rem;
     border-radius: var(--radius);
-    max-width: 600px;
-    width: 90%;
+    max-width: min(720px, 92vw);
+    width: 100%;
     max-height: 90vh;
     overflow-y: auto;
+    box-shadow: var(--shadow-hover);
 }
 
 .modal-header {
@@ -414,11 +513,42 @@ main {
 }
 
 .modal-close {
-    font-size: 2rem;
-    background: none;
+    font-size: 1.75rem;
+    line-height: 1;
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
     border: none;
     cursor: pointer;
     color: var(--text-light);
+    border-radius: var(--radius);
+}
+
+.modal-close:hover {
+    color: var(--text-dark);
+    background-color: var(--bg-light);
+}
+
+.modal-close:focus-visible {
+    box-shadow: var(--focus-ring);
+}
+
+/* Texte long-form dans la modale recette */
+.recipe-detail-inner {
+    max-width: var(--prose-max);
+    margin: 0 auto;
+}
+
+.recipe-detail-inner .ingredients-section,
+.recipe-detail-inner .instructions-section {
+    line-height: var(--line-height-prose);
+}
+
+.recipe-detail-inner .instructions-section li {
+    max-width: var(--prose-max);
 }
 
 /* Recipe Detail */
@@ -450,6 +580,8 @@ main {
 .instructions-section h2 {
     color: var(--primary-color);
     margin-bottom: 1rem;
+    font-size: var(--font-size-h2);
+    line-height: var(--line-height-tight);
 }
 
 .ingredient-group {

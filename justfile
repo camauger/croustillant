@@ -127,6 +127,10 @@ install:
     pip install -r scripts/requirements.txt
     @echo "✅ Dependencies installed!"
 
+# Appliquer neon-schema.sql sur Neon (variable DATABASE_URL dans .env)
+db-schema:
+    @python scripts/apply_neon_schema.py
+
 # Install Netlify CLI globally (if not already installed)
 install-netlify:
     @echo "📦 Installing Netlify CLI..."

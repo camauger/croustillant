@@ -4,7 +4,7 @@
 -- Enable UUID extension (optional for future use)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create recipes table
+-- Create recipes table (aligné sur l'export recettes.json / CroustillantRecipe)
 CREATE TABLE IF NOT EXISTS recipes (
     id BIGSERIAL PRIMARY KEY,
     titre TEXT NOT NULL UNIQUE,
@@ -16,9 +16,13 @@ CREATE TABLE IF NOT EXISTS recipes (
     image_url TEXT,
     category TEXT,
     tags TEXT[],
+    source_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Bases déjà créées sans cette colonne (import signets, traçabilité)
+ALTER TABLE recipes ADD COLUMN IF NOT EXISTS source_url TEXT;
 
 -- Create index on title for faster searches
 CREATE INDEX IF NOT EXISTS idx_recipes_titre ON recipes(titre);
@@ -41,7 +45,8 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create trigger to automatically update updated_at
+-- Create trigger to automatically update updated_at (idempotent)
+DROP TRIGGER IF EXISTS update_recipes_updated_at ON recipes;
 CREATE TRIGGER update_recipes_updated_at
     BEFORE UPDATE ON recipes
     FOR EACH ROW
@@ -58,3 +63,4 @@ COMMENT ON TABLE recipes IS 'Stores cooking recipes with ingredients and instruc
 COMMENT ON COLUMN recipes.ingredients IS 'JSON array of ingredients with nom, quantité, and unité';
 COMMENT ON COLUMN recipes.instructions IS 'JSON array of instruction steps';
 COMMENT ON COLUMN recipes.tags IS 'Array of tags for categorization and search';
+COMMENT ON COLUMN recipes.source_url IS 'URL source de la recette (import, lien original)';

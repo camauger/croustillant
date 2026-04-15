@@ -22,6 +22,13 @@ function showAlert(message, type = 'info') {
 
     const alert = document.createElement('div');
     alert.className = `alert ${alertClass}`;
+    if (type === 'error') {
+        alert.setAttribute('role', 'alert');
+        alert.setAttribute('aria-live', 'assertive');
+    } else {
+        alert.setAttribute('role', 'status');
+        alert.setAttribute('aria-live', 'polite');
+    }
     alert.textContent = message;
     alert.style.position = 'fixed';
     alert.style.top = '80px';

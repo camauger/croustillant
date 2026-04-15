@@ -121,9 +121,9 @@ def create_recipe(event):
         insert_query = """
             INSERT INTO recipes (
                 titre, temps_preparation, temps_cuisson, rendement,
-                ingredients, instructions, image_url, category, tags
+                ingredients, instructions, image_url, category, tags, source_url
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
         """
 
@@ -137,6 +137,7 @@ def create_recipe(event):
             body.get("image_url", ""),
             body.get("category", ""),
             body.get("tags", []),
+            body.get("source_url", ""),
         )
 
         # Insert recipe

@@ -46,6 +46,7 @@ EXPECTED_COLUMNS = {
     "image_url": "text",
     "category": "text",
     "tags": "ARRAY",
+    "source_url": "text",
     "created_at": "timestamp with time zone",
     "updated_at": "timestamp with time zone",
 }

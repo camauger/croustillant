@@ -8,8 +8,9 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+    <a href="#app" class="skip-link">Aller au contenu principal</a>
     <header>
-        <nav>
+        <nav aria-label="Navigation principale">
             <h1>🍳 Croustillant</h1>
             <ul>
                 <li><a href="/" class="nav-link active" data-page="recipes">Recettes</a></li>
@@ -25,7 +26,7 @@
         </nav>
     </header>
 
-    <main id="app">
+    <main id="app" role="main" tabindex="-1">
         <!-- Content will be dynamically loaded here -->
         <div class="loading">
             <div class="spinner"></div>
@@ -33,11 +34,11 @@
     </main>
 
     <!-- Recipe Detail Modal -->
-    <div id="recipe-modal" class="modal">
+    <div id="recipe-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-recipe-title" aria-hidden="true">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modal-recipe-title"></h2>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <button type="button" class="modal-close" onclick="closeModal()" aria-label="Fermer la recette">&times;</button>
             </div>
             <div id="modal-recipe-content"></div>
         </div>
