@@ -75,7 +75,7 @@ Visit `http://localhost:8888`
 
 1. Push to GitHub
 2. Connect repository to Netlify
-3. Set environment variable: `DATABASE_URL` (or `NETLIFY_DATABASE_URL`)
+3. Set environment variable: `DATABASE_URL`
 4. Deploy!
 
 **Build Settings:**
@@ -87,7 +87,7 @@ Visit `http://localhost:8888`
 
 ### Environment Variables
 
-- `DATABASE_URL` or `NETLIFY_DATABASE_URL`: Neon PostgreSQL connection string
+- `DATABASE_URL`: Neon PostgreSQL connection string
   - Format: `postgresql://user:password@ep-xxxxx.region.aws.neon.tech/neondb?sslmode=require`
 
 ### Netlify Configuration

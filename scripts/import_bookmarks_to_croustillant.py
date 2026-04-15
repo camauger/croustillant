@@ -26,13 +26,29 @@ Usage :
   # Importer depuis un fichier HTML exporté de Chrome
   python scripts/import_bookmarks_to_croustillant.py --html bookmarks.html
 
+  # Pipeline en deux temps : 1) export JSON, 2) révision manuelle du fichier, 3) insertion BD
+  python scripts/import_bookmarks_to_croustillant.py --folder Cuisine --dry-run -o recettes.json
+  python scripts/import_bookmarks_to_croustillant.py --from-json recettes.json
+
+  # Vérifier les liens (404, etc.) et optionnellement une copie Bookmarks sans les morts
+  python scripts/import_bookmarks_to_croustillant.py --folder Cuisine --check-urls
+  python scripts/import_bookmarks_to_croustillant.py --folder Cuisine --check-urls --prune-bookmarks Bookmarks.nettoyes
+
 Dépendances :
   pip install -r scripts/requirements.txt
+
+Limites :
+  - Seules les pages avec métadonnées de recette (souvent schema.org / JSON-LD) sont importées.
+  - Les favoris non recettes (DIY, commerce, articles) échouent — normal.
+  - Paywalls (402) et anti-bots (403) ne sont pas contournables sans navigateur / session.
+  - Tester sur un sous-ensemble : --max 10 --dry-run
+  - --check-urls : un 403 « bot » n’est pas un 404 ; par défaut seuls 404 et 410 sont retirés au prune.
 """
 
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import logging
 import os
@@ -44,11 +60,16 @@ from dataclasses import asdict, dataclass, field
 from fractions import Fraction
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlparse, urlencode, urlunparse
 
 import requests
 from bs4 import BeautifulSoup
-from recipe_scrapers import scrape_html
+from recipe_scrapers import (
+    NoSchemaFoundInWildMode,
+    RecipeSchemaNotFound,
+    WebsiteNotImplementedError,
+    scrape_html,
+)
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -63,11 +84,61 @@ log = logging.getLogger(__name__)
 
 REQUEST_DELAY_SECONDS = 1.5
 
+# Timeouts (connect, read) — évite les blocages indéfinis sur serveurs lents
+CONNECT_TIMEOUT_SECONDS = 8
+READ_TIMEOUT_SECONDS = 25
+
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/125.0.0.0 Safari/537.36"
 )
+
+HTTP_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;q=0.9,"
+        "image/avif,image/webp,*/*;q=0.8"
+    ),
+    "Accept-Language": "fr-CA,fr;q=0.9,en-CA;q=0.8,en;q=0.7",
+    "Cache-Control": "no-cache",
+    "Upgrade-Insecure-Requests": "1",
+}
+
+_TRACKING_QUERY_KEYS = frozenset({
+    "fbclid", "gclid", "igshid", "_ga", "mc_eid", "mkt_tok", "mc_cid",
+})
+_TRACKING_KEY_PREFIXES = ("utm_",)
+
+_http_session: requests.Session | None = None
+
+
+def http_session() -> requests.Session:
+    """Session HTTP réutilisable (mêmes en-têtes que le navigateur)."""
+    global _http_session
+    if _http_session is None:
+        s = requests.Session()
+        s.headers.update(HTTP_HEADERS)
+        _http_session = s
+    return _http_session
+
+
+def normalize_bookmark_url(url: str) -> str:
+    """Retire fbclid, utm_*, etc. (souvent inutiles et parfois problématiques)."""
+    raw = url.strip()
+    parsed = urlparse(raw)
+    if not parsed.query:
+        return raw
+    kept: list[tuple[str, str]] = []
+    for key, val in parse_qsl(parsed.query, keep_blank_values=True):
+        kl = key.lower()
+        if kl in _TRACKING_QUERY_KEYS or any(
+            kl.startswith(p) for p in _TRACKING_KEY_PREFIXES
+        ):
+            continue
+        kept.append((key, val))
+    new_query = urlencode(kept, doseq=True) if kept else ""
+    return urlunparse(parsed._replace(query=new_query))
 
 
 # ---------------------------------------------------------------------------
@@ -89,6 +160,60 @@ class CroustillantRecipe:
     category: str = ""
     tags: list[str] = field(default_factory=list)
     source_url: str = ""
+
+
+def recipe_from_export_dict(data: dict) -> CroustillantRecipe:
+    """Construit une recette à partir d'un objet JSON (export --dry-run)."""
+    titre = (data.get("titre") or "").strip()
+    if not titre:
+        raise ValueError("champ 'titre' requis et non vide")
+
+    ingredients = data.get("ingredients")
+    if not isinstance(ingredients, list):
+        ingredients = []
+
+    instructions = data.get("instructions")
+    if isinstance(instructions, str):
+        instructions = [instructions] if instructions.strip() else []
+    elif not isinstance(instructions, list):
+        instructions = []
+
+    tags = data.get("tags")
+    if not isinstance(tags, list):
+        tags = []
+
+    return CroustillantRecipe(
+        titre=titre,
+        temps_preparation=str(data.get("temps_preparation") or ""),
+        temps_cuisson=str(data.get("temps_cuisson") or ""),
+        rendement=str(data.get("rendement") or ""),
+        ingredients=ingredients,
+        instructions=instructions,
+        image_url=str(data.get("image_url") or ""),
+        category=str(data.get("category") or ""),
+        tags=[str(t) for t in tags],
+        source_url=str(data.get("source_url") or ""),
+    )
+
+
+def load_recipes_from_json(path: Path) -> list[CroustillantRecipe]:
+    """Charge un tableau JSON de recettes (même format que l'export --dry-run)."""
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    if not isinstance(raw, list):
+        raise ValueError("le JSON doit être un tableau [...] de recettes")
+
+    recipes: list[CroustillantRecipe] = []
+    for i, item in enumerate(raw):
+        if not isinstance(item, dict):
+            log.warning("Entrée %s ignorée (objet attendu)", i)
+            continue
+        try:
+            recipes.append(recipe_from_export_dict(item))
+        except ValueError as err:
+            log.warning("Entrée %s ignorée: %s", i, err)
+
+    return recipes
 
 
 # ---------------------------------------------------------------------------
@@ -180,12 +305,101 @@ def extract_urls_from_bookmarks_html(
             dl = h3.find_next_sibling("dl")
             if dl:
                 for a_tag in dl.find_all("a", href=True):
+                    href = a_tag.get("href")
+                    if not href:
+                        continue
                     results.append({
                         "title": a_tag.get_text(strip=True),
-                        "url": a_tag["href"],
+                        "url": str(href),
                     })
 
     return results
+
+
+def probe_url_http_status(url: str) -> tuple[Optional[int], str]:
+    """GET en streaming pour obtenir le code final après redirections."""
+    clean = normalize_bookmark_url(url)
+    session = http_session()
+    try:
+        resp = session.get(
+            clean,
+            allow_redirects=True,
+            timeout=(5, 12),
+            stream=True,
+        )
+        code = resp.status_code
+        resp.close()
+        return code, ""
+    except requests.RequestException as exc:
+        return None, str(exc)
+
+
+def parse_prune_codes(raw: str) -> set[int]:
+    """Codes HTTP à considérés comme « morts » pour --prune-bookmarks."""
+    out: set[int] = set()
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            out.add(int(part))
+        except ValueError:
+            log.warning("Code HTTP ignoré : %s", part)
+    return out if out else {404, 410}
+
+
+def prune_bookmarks_json_data(
+    data: dict,
+    folder_name: str,
+    dead_urls: set[str],
+) -> dict:
+    """
+    Copie profonde du JSON Bookmarks avec les favoris `url` retirés
+    (dans le dossier cible uniquement, même logique que l'extraction).
+    """
+    out = copy.deepcopy(data)
+    for root_key in out.get("roots", {}):
+        root_node = out["roots"][root_key]
+        if isinstance(root_node, dict):
+            _prune_bookmark_node(root_node, folder_name, dead_urls, False)
+    return out
+
+
+def _prune_bookmark_node(
+    node: dict,
+    folder_name: str,
+    dead_urls: set[str],
+    in_target: bool,
+) -> None:
+    target = folder_name.lower()
+    node_type = node.get("type", "")
+    name = node.get("name", "").lower()
+
+    if node_type == "folder" and target in name:
+        in_target = True
+
+    children = node.get("children")
+    if not children:
+        return
+
+    new_children: list = []
+    for child in children:
+        if not isinstance(child, dict):
+            new_children.append(child)
+            continue
+        ct = child.get("type", "")
+        if ct == "url" and in_target:
+            u = child.get("url", "")
+            if u in dead_urls:
+                log.info(
+                    "  Supprimé : %s",
+                    (u[:100] + "…") if len(u) > 100 else u,
+                )
+                continue
+        if ct == "folder":
+            _prune_bookmark_node(child, folder_name, dead_urls, in_target)
+        new_children.append(child)
+    node["children"] = new_children
 
 
 # ---------------------------------------------------------------------------
@@ -246,32 +460,46 @@ def parse_ingredient_string(raw: str) -> dict:
 
 
 def scrape_recipe(url: str) -> Optional[CroustillantRecipe]:
-    """Télécharge et scrape une URL de recette."""
+    """Télécharge et scrape une URL de recette (schema.org / JSON-LD Recipe)."""
+    clean_url = normalize_bookmark_url(url)
+    if clean_url != url:
+        log.info("    (URL nettoyée) %s", clean_url)
+
     try:
-        response = requests.get(
-            url,
-            headers={"User-Agent": USER_AGENT},
-            timeout=15,
+        session = http_session()
+        response = session.get(
+            clean_url,
+            timeout=(CONNECT_TIMEOUT_SECONDS, READ_TIMEOUT_SECONDS),
+            allow_redirects=True,
         )
         response.raise_for_status()
     except requests.RequestException as e:
-        log.warning("  ✗ HTTP error pour %s: %s", url, e)
+        log.warning("  ✗ HTTP error pour %s: %s", clean_url, e)
         return None
 
     try:
         scraper = scrape_html(
             html=response.text,
-            org_url=url,
-            wild_mode=True,
+            org_url=clean_url,
+            supported_only=False,
         )
+    except WebsiteNotImplementedError as e:
+        log.warning("  ✗ Domaine non supporté par recipe-scrapers: %s", e)
+        return None
+    except (NoSchemaFoundInWildMode, RecipeSchemaNotFound) as e:
+        log.warning(
+            "  ✗ Pas de schéma Recipe sur la page (article non recette, DIY, produit, ou site sans JSON-LD): %s",
+            e,
+        )
+        return None
     except Exception as e:
-        log.warning("  ✗ Parsing error pour %s: %s", url, e)
+        log.warning("  ✗ Erreur recipe-scrapers pour %s: %s", clean_url, e)
         return None
 
     try:
-        titre = scraper.title() or urlparse(url).path.strip("/").replace("-", " ").title()
+        titre = scraper.title() or urlparse(clean_url).path.strip("/").replace("-", " ").title()
     except Exception:
-        titre = urlparse(url).path.strip("/").replace("-", " ").title()
+        titre = urlparse(clean_url).path.strip("/").replace("-", " ").title()
 
     raw_ingredients = []
     try:
@@ -332,7 +560,7 @@ def scrape_recipe(url: str) -> Optional[CroustillantRecipe]:
 
     tags = []
     try:
-        host = urlparse(url).hostname or ""
+        host = urlparse(clean_url).hostname or ""
         host_clean = host.replace("www.", "")
         if host_clean:
             tags.append(host_clean)
@@ -341,18 +569,29 @@ def scrape_recipe(url: str) -> Optional[CroustillantRecipe]:
     if category:
         tags.append(category)
 
-    return CroustillantRecipe(
-        titre=titre,
-        temps_preparation=prep_time,
-        temps_cuisson=cook_time,
-        rendement=rendement,
-        ingredients=ingredients,
-        instructions=instructions,
-        image_url=image_url,
-        category=category,
-        tags=tags,
-        source_url=url,
-    )
+    if not ingredients and not instructions:
+        log.warning(
+            "  ✗ Extraction vide (ingrédients et instructions) — %s",
+            clean_url,
+        )
+        return None
+
+    try:
+        return CroustillantRecipe(
+            titre=titre,
+            temps_preparation=prep_time,
+            temps_cuisson=cook_time,
+            rendement=rendement,
+            ingredients=ingredients,
+            instructions=instructions,
+            image_url=image_url,
+            category=category,
+            tags=tags,
+            source_url=clean_url,
+        )
+    except Exception as e:
+        log.warning("  ✗ Erreur inattendue pour %s: %s", clean_url, e)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -471,8 +710,185 @@ def main() -> None:
         default=REQUEST_DELAY_SECONDS,
         help=f"Délai entre les requêtes en secondes (défaut: {REQUEST_DELAY_SECONDS})",
     )
+    parser.add_argument(
+        "--max",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Limiter le nombre d'URLs à traiter (tests / sous-ensemble)",
+    )
+    parser.add_argument(
+        "--from-json",
+        metavar="FILE",
+        default=None,
+        help="Importer un JSON déjà exporté (--dry-run) dans la BD sans re-scraper",
+    )
+    parser.add_argument(
+        "--check-urls",
+        action="store_true",
+        help="Vérifier chaque URL (HTTP) : affiche le code statut ; ne scrape pas les recettes",
+    )
+    parser.add_argument(
+        "--prune-bookmarks",
+        metavar="FICHIER_SORTIE",
+        default=None,
+        help="Avec --check-urls : écrire une copie du Bookmarks JSON sans les liens aux codes "
+        "--prune-codes. Fermer Chrome avant de remplacer le fichier source.",
+    )
+    parser.add_argument(
+        "--prune-codes",
+        default="404,410",
+        help="Codes HTTP retirés lors du prune (défaut: 404,410). Ex: 404,410,451",
+    )
 
     args = parser.parse_args()
+
+    if args.prune_bookmarks and not args.check_urls:
+        parser.error("--prune-bookmarks requiert --check-urls")
+    if args.prune_bookmarks and args.html:
+        parser.error("--prune-bookmarks nécessite le fichier Bookmarks JSON Chrome (omettre --html)")
+    if args.check_urls and args.from_json is not None:
+        parser.error("--check-urls est incompatible avec --from-json")
+
+    if args.check_urls:
+        log.info("Vérification HTTP des favoris (dossier '%s')...", args.folder)
+        bookmark_file: Optional[Path] = None
+        if args.html:
+            html_path = Path(args.html)
+            if not html_path.exists():
+                log.error("Fichier HTML introuvable : %s", html_path)
+                sys.exit(1)
+            bookmarks = extract_urls_from_bookmarks_html(html_path, args.folder)
+        else:
+            if args.bookmarks:
+                bookmark_file = Path(args.bookmarks)
+            else:
+                bookmark_file = find_chrome_bookmarks_path()
+            log.info("  Fichier Bookmarks : %s", bookmark_file)
+            bookmarks = extract_urls_from_bookmarks_json(bookmark_file, args.folder)
+
+        if not bookmarks:
+            log.warning(
+                "Aucun favori dans le dossier '%s'. Vérifiez --folder.",
+                args.folder,
+            )
+            if bookmark_file is not None:
+                _show_available_folders(bookmark_file)
+            sys.exit(0)
+
+        if args.max is not None and args.max > 0:
+            bookmarks = bookmarks[: args.max]
+            log.info("  (limité à %s URLs via --max)", len(bookmarks))
+
+        prune_codes = parse_prune_codes(args.prune_codes)
+        dead_urls: set[str] = set()
+        err_n = 0
+        dead_n = 0
+
+        for i, bk in enumerate(bookmarks, 1):
+            title = bk["title"]
+            code, err_msg = probe_url_http_status(bk["url"])
+            if code is None:
+                err_n += 1
+                log.warning(
+                    "  [%s/%s] ERREUR — %s — %s",
+                    i,
+                    len(bookmarks),
+                    title[:60],
+                    err_msg[:80],
+                )
+            elif code in prune_codes:
+                dead_n += 1
+                dead_urls.add(bk["url"])
+                log.warning(
+                    "  [%s/%s] %s → %s (sera retiré si prune)",
+                    i,
+                    len(bookmarks),
+                    code,
+                    (title[:50] + "…") if len(title) > 50 else title,
+                )
+            else:
+                log.info(
+                    "  [%s/%s] %s → %s",
+                    i,
+                    len(bookmarks),
+                    code,
+                    (title[:50] + "…") if len(title) > 50 else title,
+                )
+
+            if i < len(bookmarks):
+                time.sleep(args.delay)
+
+        log.info(
+            "Résumé : %s liens testés, %s erreurs réseau/timeout, "
+            "%s à retirer (codes %s)",
+            len(bookmarks),
+            err_n,
+            dead_n,
+            sorted(prune_codes),
+        )
+
+        if args.prune_bookmarks:
+            if bookmark_file is None:
+                log.error("Fichier Bookmarks introuvable pour --prune-bookmarks.")
+                sys.exit(1)
+            out_path = Path(args.prune_bookmarks)
+            with open(bookmark_file, encoding="utf-8") as f:
+                full_data = json.load(f)
+            pruned = prune_bookmarks_json_data(
+                full_data, args.folder, dead_urls
+            )
+            with open(out_path, "w", encoding="utf-8") as f:
+                json.dump(pruned, f, ensure_ascii=False)
+            log.info(
+                "Copie écrite : %s (%s favori(s) retiré(s)). "
+                "Fermez Chrome, puis remplacez le fichier Bookmarks si besoin.",
+                out_path,
+                len(dead_urls),
+            )
+        sys.exit(0)
+
+    if args.from_json is not None:
+        if args.html is not None or args.bookmarks is not None:
+            parser.error(
+                "--from-json est incompatible avec --html et --bookmarks"
+            )
+        path = Path(args.from_json)
+        if not path.is_file():
+            log.error("Fichier introuvable : %s", path)
+            sys.exit(1)
+        try:
+            recipes = load_recipes_from_json(path)
+        except json.JSONDecodeError as e:
+            log.error("JSON invalide : %s", e)
+            sys.exit(1)
+        except ValueError as e:
+            log.error("%s", e)
+            sys.exit(1)
+
+        log.info("%s recette(s) chargée(s) depuis %s", len(recipes), path)
+        if not recipes:
+            log.warning("Aucune recette valide. Arrêt.")
+            sys.exit(0)
+
+        if args.dry_run:
+            log.info(
+                "Dry-run : pas d'insertion en base (fichier déjà relu / validé)."
+            )
+            sys.exit(0)
+
+        db_url = args.database_url or os.environ.get("DATABASE_URL")
+        if not db_url:
+            log.error(
+                "DATABASE_URL non définie pour l'import. "
+                "Utilisez --database-url ou la variable d'environnement."
+            )
+            sys.exit(1)
+
+        log.info("Insertion dans Neon DB...")
+        inserted, errs = insert_recipes_to_neon(recipes, db_url)
+        log.info("  ✓ %s traitées en base, %s erreurs", inserted, errs)
+        sys.exit(0)
 
     log.info("Recherche des favoris dans le dossier '%s'...", args.folder)
 
@@ -503,6 +919,10 @@ def main() -> None:
 
     log.info("  → %s URLs trouvées", len(bookmarks))
 
+    if args.max is not None and args.max > 0:
+        bookmarks = bookmarks[: args.max]
+        log.info("  (limité à %s URLs via --max)", len(bookmarks))
+
     log.info("Scraping des recettes...")
     recipes: list[CroustillantRecipe] = []
     failed_urls: list[str] = []
@@ -513,7 +933,15 @@ def main() -> None:
         log.info("  [%s/%s] %s", i, len(bookmarks), title)
         log.info("    → %s", url)
 
-        recipe = scrape_recipe(url)
+        try:
+            recipe = scrape_recipe(url)
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            log.warning("  ✗ Erreur inattendue: %s", e)
+            failed_urls.append(url)
+            recipe = None
+
         if recipe:
             log.info(
                 "    ✓ %s (%s ingrédients)",
@@ -552,11 +980,7 @@ def main() -> None:
             json.dump(export_data, f, ensure_ascii=False, indent=2)
         log.info("Export JSON : %s (%s recettes)", output_path, len(recipes))
     else:
-        db_url = (
-            args.database_url
-            or os.environ.get("DATABASE_URL")
-            or os.environ.get("NETLIFY_DATABASE_URL")
-        )
+        db_url = args.database_url or os.environ.get("DATABASE_URL")
         if not db_url:
             log.error(
                 "DATABASE_URL non définie. Options :\n"
