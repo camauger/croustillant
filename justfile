@@ -9,9 +9,16 @@ default:
     @just --list
 
 # Development
-# Start local development server with Netlify CLI
-# Clears Deno cache and kills processes before starting to avoid EBUSY errors
+# Serveur local Python : static (public/) + API /api/* — les handlers sont les mêmes que sur Netlify.
+# (netlify dev n'exécute pas les fonctions Python localement → 404 sur /.netlify/functions/*.)
+
 dev:
+    @echo "🚀 Démarrage du serveur local (static + API Python)…"
+    @python scripts/local_dev_server.py
+
+# Netlify CLI (proxy + static) — utile pour tester redirects/headers ; l'API Python reste absente en local.
+# Clears Deno cache and kills processes before starting to avoid EBUSY errors
+dev-netlify:
     @echo "🚀 Starting Netlify dev server..."
     @echo "🧹 Killing Deno/Netlify processes and clearing cache..."
     @just kill-deno-processes >/dev/null 2>&1 || true
@@ -33,21 +40,8 @@ dev:
 
 # Development (PowerShell version - use if bash shell doesn't work)
 dev-ps:
-    @just kill-deno-processes >/dev/null 2>&1 || true
-    @just clear-deno-cache >/dev/null 2>&1 || true
-    @echo "🚀 Starting Netlify dev server..."
-    @echo "⚠️  Note: Edge Functions errors can be ignored - Python functions will work in production"
-    @if command -v netlify >/dev/null 2>&1; then \
-        netlify dev; \
-    elif command -v npx >/dev/null 2>&1; then \
-        echo "⚠️  Using npx to run netlify (not in PATH)"; \
-        npx --yes netlify-cli dev; \
-    else \
-        echo "❌ Error: Netlify CLI is not installed"; \
-        echo "   Install it with: just install-netlify"; \
-        echo "   Or manually: npm install -g netlify-cli"; \
-        exit 1; \
-    fi
+    @echo "🚀 Démarrage du serveur local (static + API Python)…"
+    @python scripts/local_dev_server.py
 
 # Kill Deno and Netlify processes (fixes EBUSY errors on Windows)
 kill-deno-processes:
