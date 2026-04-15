@@ -8,13 +8,36 @@ set shell := ["bash", "-cu"]
 default:
     @just --list
 
+# Interpreteur Python (pas de scripts .sh : CRLF Windows casse bash). Shebang + positional-arguments pour "$@".
+[private]
+[positional-arguments]
+python-run *ARGS:
+    #!/usr/bin/env bash
+    set -eu
+    if [[ -x .venv/Scripts/python.exe ]]; then
+      exec .venv/Scripts/python.exe "$@"
+    elif [[ -x .venv/bin/python ]]; then
+      exec .venv/bin/python "$@"
+    elif command -v python3 >/dev/null 2>&1; then
+      exec python3 "$@"
+    elif command -v python >/dev/null 2>&1; then
+      exec python "$@"
+    elif command -v py >/dev/null 2>&1; then
+      exec py -3 "$@"
+    else
+      echo "Python introuvable : installez Python, ajoutez-le au PATH, ou creez .venv (python -m venv .venv)" >&2
+      exit 127
+    fi
+
 # Development
 # Serveur local Python : static (public/) + API /api/* — les handlers sont les mêmes que sur Netlify.
 # (netlify dev n'exécute pas les fonctions Python localement → 404 sur /.netlify/functions/*.)
 
 dev:
-    @echo "🚀 Démarrage du serveur local (static + API Python)…"
-    @python scripts/local_dev_server.py
+    #!/usr/bin/env bash
+    set -eu
+    echo "🚀 Démarrage du serveur local (static + API Python)…"
+    exec "{{just_executable()}}" python-run scripts/local_dev_server.py
 
 # Netlify CLI (proxy + static) — utile pour tester redirects/headers ; l'API Python reste absente en local.
 # Clears Deno cache and kills processes before starting to avoid EBUSY errors
@@ -40,8 +63,10 @@ dev-netlify:
 
 # Development (PowerShell version - use if bash shell doesn't work)
 dev-ps:
-    @echo "🚀 Démarrage du serveur local (static + API Python)…"
-    @python scripts/local_dev_server.py
+    #!/usr/bin/env bash
+    set -eu
+    echo "🚀 Démarrage du serveur local (static + API Python)…"
+    exec "{{just_executable()}}" python-run scripts/local_dev_server.py
 
 # Kill Deno and Netlify processes (fixes EBUSY errors on Windows)
 kill-deno-processes:
@@ -123,7 +148,9 @@ install:
 
 # Appliquer neon-schema.sql sur Neon (variable DATABASE_URL dans .env)
 db-schema:
-    @python scripts/apply_neon_schema.py
+    #!/usr/bin/env bash
+    set -eu
+    exec "{{just_executable()}}" python-run scripts/apply_neon_schema.py
 
 # Install Netlify CLI globally (if not already installed)
 install-netlify:
@@ -146,12 +173,15 @@ setup:
 # Run database migration from SQLite to Supabase
 migrate:
     @echo "🔄 Running database migration..."
-    cd migration && pip install -r requirements.txt && python migrate-to-supabase.py
+    @cd migration && pip install -r requirements.txt && (if [ -x ../.venv/Scripts/python.exe ]; then ../.venv/Scripts/python.exe migrate-to-supabase.py; elif [ -x ../.venv/bin/python ]; then ../.venv/bin/python migrate-to-supabase.py; elif command -v python3 >/dev/null 2>&1; then python3 migrate-to-supabase.py; elif command -v python >/dev/null 2>&1; then python migrate-to-supabase.py; elif command -v py >/dev/null 2>&1; then py -3 migrate-to-supabase.py; else echo "Python introuvable"; exit 127; fi)
 
 # Import recipes from Chrome bookmarks (folder "Recettes" by default). Requires scripts/requirements.txt and DATABASE_URL.
+[positional-arguments]
 import-bookmarks *ARGS:
-    @echo "📥 Import favoris → Croustillant..."
-    python scripts/import_bookmarks_to_croustillant.py {{ARGS}}
+    #!/usr/bin/env bash
+    set -eu
+    echo "📥 Import favoris → Croustillant..."
+    exec "{{just_executable()}}" python-run scripts/import_bookmarks_to_croustillant.py "$@"
 
 # Test API endpoints locally
 # Note: Requires Netlify dev server to be running (use 'just dev' in another terminal)
@@ -180,7 +210,7 @@ test-shopping-list:
         -H "Content-Type: application/json" \
         -d '{"recipe_ids":[1,2],"exclude_pantry":false}' \
         -s \
-        | python -m json.tool 2>/dev/null || echo "❌ Failed to generate shopping list. Check server logs."
+        | (if [ -x .venv/Scripts/python.exe ]; then .venv/Scripts/python.exe -m json.tool; elif [ -x .venv/bin/python ]; then .venv/bin/python -m json.tool; elif command -v python3 >/dev/null 2>&1; then python3 -m json.tool; elif command -v python >/dev/null 2>&1; then python -m json.tool; elif command -v py >/dev/null 2>&1; then py -3 -m json.tool; else cat; fi) 2>/dev/null || echo "❌ Failed to generate shopping list. Check server logs."
 
 # Lint and format (if tools are available)
 lint:
