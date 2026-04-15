@@ -1,5 +1,5 @@
-import { json, err } from "../lib/http.mjs";
-import { queryOne, execReturning, execCommand } from "../lib/db.mjs";
+import { json, err } from "./shared/http.mjs";
+import { queryOne, execReturning, execCommand } from "./shared/db.mjs";
 
 function recipeIdFromPath(event) {
   const path = event.path || event.rawPath || "";

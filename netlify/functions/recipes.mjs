@@ -1,5 +1,5 @@
-import { json, err } from "../lib/http.mjs";
-import { queryAll, queryOne, execReturning } from "../lib/db.mjs";
+import { json, err } from "./shared/http.mjs";
+import { queryAll, queryOne, execReturning } from "./shared/db.mjs";
 
 function parseParams(qs) {
   if (!qs) return {};
