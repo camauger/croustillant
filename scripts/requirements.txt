@@ -1,0 +1,5 @@
+# Dépendances pour scripts/import_bookmarks_to_croustillant.py (hors Netlify Functions)
+beautifulsoup4>=4.12.0
+psycopg2-binary==2.9.11
+recipe-scrapers>=15.0.0
+requests>=2.31.0

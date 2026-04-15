@@ -120,11 +120,11 @@ diagnostic:
     @echo "=== FIN DU DIAGNOSTIC ==="
 
 # Install dependencies
-# Install Python dependencies for Netlify functions and migration tools
+# Install Python dependencies for Netlify functions and local scripts (import favoris, etc.)
 install:
     @echo "📦 Installing Python dependencies..."
     pip install -r netlify/functions/requirements.txt
-    pip install -r migration/requirements.txt
+    pip install -r scripts/requirements.txt
     @echo "✅ Dependencies installed!"
 
 # Install Netlify CLI globally (if not already installed)
@@ -149,6 +149,11 @@ setup:
 migrate:
     @echo "🔄 Running database migration..."
     cd migration && pip install -r requirements.txt && python migrate-to-supabase.py
+
+# Import recipes from Chrome bookmarks (folder "Recettes" by default). Requires scripts/requirements.txt and DATABASE_URL.
+import-bookmarks *ARGS:
+    @echo "📥 Import favoris → Croustillant..."
+    python scripts/import_bookmarks_to_croustillant.py {{ARGS}}
 
 # Test API endpoints locally
 # Note: Requires Netlify dev server to be running (use 'just dev' in another terminal)
