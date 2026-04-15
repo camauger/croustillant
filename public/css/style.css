@@ -362,6 +362,33 @@ main:focus-visible {
 }
 
 /* Shopping List */
+.shopping-selected-recipes {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.5rem 0 0;
+}
+
+.shopping-selected-recipes li {
+    margin-bottom: 0.5rem;
+}
+
+.shopping-selected-recipes .shopping-recipe-link {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.shopping-selected-recipes .shopping-recipe-link:hover {
+    color: var(--primary-dark);
+}
+
+.shopping-selected-recipes .shopping-recipe-link:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
 .shopping-category {
     margin-bottom: 2rem;
 }

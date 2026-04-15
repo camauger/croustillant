@@ -2,6 +2,15 @@
 
 let currentShoppingList = null;
 
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 async function renderShoppingList() {
     const app = document.getElementById('app');
     const selectedIds = storage.getSelectedRecipes();
@@ -79,8 +88,16 @@ function displayShoppingList(data) {
     const recipesHTML = `
         <div class="card">
             <h3>Recettes sélectionnées</h3>
-            <ul>
-                ${data.recipes.map(r => `<li>${r.titre}</li>`).join('')}
+            <ul class="shopping-selected-recipes">
+                ${data.recipes.map((r) => `
+                    <li>
+                        <a href="/recipe/${r.id}"
+                           class="shopping-recipe-link"
+                           onclick="event.preventDefault(); showRecipeDetail(${r.id});">
+                            ${escapeHtml(r.titre)}
+                        </a>
+                    </li>
+                `).join('')}
             </ul>
         </div>
     `;
