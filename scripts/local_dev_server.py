@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
-FUNC_DIR = ROOT / "netlify" / "functions"
+FUNC_DIR = ROOT / "netlify" / "functions-python"
 
 
 def _load_module(filename: str, as_name: str):

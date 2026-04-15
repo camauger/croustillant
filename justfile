@@ -94,18 +94,18 @@ clear-netlify-cache:
 # Debug: Check function files and configuration
 debug-functions:
     @echo "🔍 Checking function configuration..."
-    @echo "Functions directory: netlify/functions"
-    @echo "Python files found:"
-    @ls -1 netlify/functions/*.py 2>/dev/null | sed 's|netlify/functions/||' || echo "  No Python files found"
+    @echo "Functions directory (Node prod): netlify/functions"
+    @echo "Python files (dev local): netlify/functions-python"
+    @ls -1 netlify/functions-python/*.py 2>/dev/null | sed 's|netlify/functions-python/||' || echo "  No Python files found"
     @echo ""
     @echo "Runtime file:"
-    @cat netlify/functions/runtime.txt 2>/dev/null || echo "  ❌ runtime.txt not found"
+    @cat netlify/functions-python/runtime.txt 2>/dev/null || echo "  ❌ runtime.txt not found"
     @echo ""
     @echo "Requirements file:"
-    @cat netlify/functions/requirements.txt 2>/dev/null || echo "  ❌ requirements.txt not found"
+    @cat netlify/functions-python/requirements.txt 2>/dev/null || echo "  ❌ requirements.txt not found"
     @echo ""
     @echo "Checking for handler functions:"
-    @grep -l "def handler" netlify/functions/*.py 2>/dev/null | sed 's|netlify/functions/||' | sed 's/^/  ✅ /' || echo "  ❌ No handler functions found"
+    @grep -l "def handler" netlify/functions-python/*.py 2>/dev/null | sed 's|netlify/functions-python/||' | sed 's/^/  ✅ /' || echo "  ❌ No handler functions found"
 
 # Diagnostic complet - vérifie tout
 diagnostic:
@@ -122,7 +122,7 @@ diagnostic:
     @if [ -f netlify.toml ]; then echo "   ✅ netlify.toml existe"; else echo "   ❌ netlify.toml MANQUANT"; fi
     @echo ""
     @echo "4. Fonctions Python:"
-    @count=$$(ls -1 netlify/functions/*.py 2>/dev/null | wc -l | tr -d ' '); \
+    @count=$$(ls -1 netlify/functions-python/*.py 2>/dev/null | wc -l | tr -d ' '); \
     if [ "$$count" = "3" ]; then echo "   ✅ $$count fichiers trouvés"; else echo "   ❌ $$count fichiers (attendu: 3)"; fi
     @echo ""
     @echo "5. Variables d'environnement:"
@@ -142,7 +142,7 @@ diagnostic:
 # Install Python dependencies for Netlify functions and local scripts (import favoris, etc.)
 install:
     @echo "📦 Installing Python dependencies..."
-    pip install -r netlify/functions/requirements.txt
+    pip install -r netlify/functions-python/requirements.txt
     pip install -r scripts/requirements.txt
     @echo "✅ Dependencies installed!"
 
@@ -216,7 +216,7 @@ test-shopping-list:
 lint:
     @echo "🔍 Checking code style..."
     @if command -v flake8 >/dev/null 2>&1; then \
-        flake8 netlify/functions/*.py netlify/functions/utils/*.py; \
+        flake8 netlify/functions-python/*.py netlify/functions-python/utils/*.py; \
     else \
         echo "⚠️  flake8 not installed. Install with: pip install flake8"; \
     fi

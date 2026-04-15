@@ -70,7 +70,7 @@ def main() -> int:
         import psycopg2
         from psycopg2.extras import RealDictCursor
     except ImportError:
-        print("Erreur: installez psycopg2-binary (pip install -r netlify/functions/requirements.txt)")
+        print("Erreur: installez psycopg2-binary (pip install -r netlify/functions-python/requirements.txt)")
         return 1
 
     parsed = urlparse(url)
