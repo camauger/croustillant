@@ -61,22 +61,22 @@ function displayShoppingList(data) {
     // Create header with options
     const headerHTML = `
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div>
+            <div class="page-toolbar">
+                <div class="page-toolbar-intro">
                     <h2>Liste de courses</h2>
                     <p>${data.total_items} articles pour ${data.recipe_count} recettes</p>
                 </div>
-                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="page-toolbar-actions">
+                    <label class="shopping-pantry-label">
                         <input type="checkbox" id="exclude-pantry"
                                ${prefs.excludePantryItems ? 'checked' : ''}
                                onchange="toggleExcludePantry()">
-                        Exclure les articles de base
+                        <span>Exclure les articles de base</span>
                     </label>
-                    <button class="btn btn-primary" onclick="exportShoppingList()">
+                    <button type="button" class="btn btn-primary" onclick="exportShoppingList()">
                         📋 Copier la liste
                     </button>
-                    <button class="btn btn-primary" onclick="printShoppingList()">
+                    <button type="button" class="btn btn-primary" onclick="printShoppingList()">
                         🖨️ Imprimer
                     </button>
                 </div>

@@ -38,12 +38,20 @@
     box-sizing: border-box;
 }
 
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
 body {
     font-family: var(--font-sans);
     font-size: var(--font-size-body);
     line-height: var(--line-height-prose);
     color: var(--text-dark);
     background-color: var(--bg-light);
+    overflow-x: clip;
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 /* Liens / boutons : annuler outline classique au profit de :focus-visible */
@@ -101,7 +109,10 @@ body {
 header {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
-    padding: 1rem 0;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: 1rem;
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
@@ -111,7 +122,7 @@ header {
 nav {
     max-width: var(--content-max);
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left));
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -168,7 +179,8 @@ nav a:focus-visible {
 main {
     max-width: var(--content-max);
     margin: 2rem auto;
-    padding: 0 1rem;
+    padding: 0 max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
 
 main:focus-visible {
@@ -186,15 +198,17 @@ main:focus-visible {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-hover);
+@media (hover: hover) and (pointer: fine) {
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+    }
 }
 
-/* Recipe Grid */
+/* Recipe Grid — minmax évite le débordement horizontal sur petits écrans */
 .recipe-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 1.5rem;
 }
 
@@ -202,6 +216,10 @@ main:focus-visible {
     cursor: pointer;
     position: relative;
     overflow: hidden;
+}
+
+.recipe-card-hit {
+    cursor: pointer;
 }
 
 .recipe-card img {
@@ -244,7 +262,9 @@ main:focus-visible {
 
 /* Buttons */
 .btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.75rem 1.5rem;
     border-radius: var(--radius);
     border: none;
@@ -254,6 +274,8 @@ main:focus-visible {
     text-decoration: none;
     transition: all 0.3s;
     text-align: center;
+    min-height: var(--touch-min);
+    touch-action: manipulation;
 }
 
 .btn-primary {
@@ -303,6 +325,13 @@ main:focus-visible {
 .btn-small {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
+    min-height: 2.5rem;
+}
+
+@media (max-width: 768px) {
+    .btn-small {
+        min-height: var(--touch-min);
+    }
 }
 
 /* Forms */
@@ -359,6 +388,48 @@ main:focus-visible {
 
 .ingredient-item button {
     padding: 0.5rem 0.75rem;
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+}
+
+/* Barres d’outils (liste de courses, sélection) — empilement sur mobile */
+.page-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-toolbar--selection {
+    align-items: center;
+}
+
+.page-toolbar-intro h2 {
+    margin-bottom: 0.25rem;
+}
+
+.page-toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.shopping-pantry-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: var(--touch-min);
+    padding: 0.25rem 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.shopping-pantry-label input[type="checkbox"] {
+    width: 1.35rem;
+    height: 1.35rem;
+    flex-shrink: 0;
 }
 
 /* Shopping List */
@@ -377,6 +448,11 @@ main:focus-visible {
     font-weight: 600;
     text-decoration: underline;
     text-underline-offset: 2px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0;
+    min-height: var(--touch-min);
+    line-height: 1.35;
 }
 
 .shopping-selected-recipes .shopping-recipe-link:hover {
@@ -414,6 +490,8 @@ main:focus-visible {
     gap: 0.75rem;
     cursor: pointer;
     transition: background-color 0.3s;
+    min-height: var(--touch-min);
+    -webkit-tap-highlight-color: transparent;
 }
 
 .shopping-items li:hover {
@@ -426,9 +504,12 @@ main:focus-visible {
 }
 
 .shopping-items input[type="checkbox"] {
-    width: 1.2rem;
-    height: 1.2rem;
+    width: 1.35rem;
+    height: 1.35rem;
+    min-width: 1.35rem;
+    min-height: 1.35rem;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 /* Search Bar */
@@ -440,11 +521,12 @@ main:focus-visible {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+    align-items: stretch;
 }
 
 .search-bar input {
     flex: 1;
-    min-width: 200px;
+    min-width: 0;
     padding: 0.75rem;
     border: 2px solid var(--border-color);
     border-radius: var(--radius);
@@ -523,13 +605,15 @@ main:focus-visible {
 
 .modal-content {
     background: var(--bg-white);
-    padding: 2rem;
+    padding: max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
     border-radius: var(--radius);
-    max-width: min(720px, 92vw);
+    max-width: min(720px, 100vw - 1rem);
     width: 100%;
-    max-height: 90vh;
+    max-height: min(90vh, calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1rem));
+    max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1rem));
     overflow-y: auto;
     box-shadow: var(--shadow-hover);
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal-header {
@@ -647,24 +731,96 @@ main:focus-visible {
 
 /* Responsive */
 @media (max-width: 768px) {
+    main {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .card {
+        padding: 1.15rem;
+    }
+
     nav {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    nav h1 {
+        text-align: center;
     }
 
     nav ul {
-        gap: 0.5rem;
+        gap: 0.35rem;
+        justify-content: center;
+    }
+
+    .page-toolbar,
+    .page-toolbar--selection {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-toolbar-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-toolbar-actions .btn {
+        width: 100%;
     }
 
     .recipe-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .search-bar {
         flex-direction: column;
     }
 
+    .search-bar .btn {
+        width: 100%;
+    }
+
     .btn {
+        width: 100%;
+    }
+
+    .ingredient-item {
+        flex-wrap: wrap;
+    }
+
+    .ingredient-item .ing-name {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .ingredient-item .ing-qty {
+        flex: 1 1 5rem;
+        min-width: 0;
+    }
+
+    .ingredient-item .ing-unit {
+        flex: 1 1 4rem;
+        min-width: 0;
+    }
+
+    .modal-content {
+        max-width: 100%;
+        margin: 0 0.25rem;
+        border-radius: var(--radius);
+    }
+}
+
+@media (max-width: 480px) {
+    nav ul {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    nav a {
+        min-width: 0;
         width: 100%;
     }
 }

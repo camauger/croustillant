@@ -51,13 +51,15 @@ async function renderSelection() {
 
         app.innerHTML = `
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h2>Ma sélection (${recipes.length} recettes)</h2>
-                    <div style="display: flex; gap: 1rem;">
-                        <button class="btn btn-primary" onclick="router.navigate('shopping')">
+                <div class="page-toolbar page-toolbar--selection">
+                    <div class="page-toolbar-intro">
+                        <h2>Ma sélection (${recipes.length} recettes)</h2>
+                    </div>
+                    <div class="page-toolbar-actions">
+                        <button type="button" class="btn btn-primary" onclick="router.navigate('shopping')">
                             📋 Générer la liste de courses
                         </button>
-                        <button class="btn btn-danger" onclick="clearSelection()">
+                        <button type="button" class="btn btn-danger" onclick="clearSelection()">
                             🗑️ Vider la sélection
                         </button>
                     </div>
@@ -79,7 +81,7 @@ function createSelectionCard(recipe) {
 
     return `
         <div class="card recipe-card">
-            <div onclick="showRecipeDetail(${recipe.id})" style="cursor: pointer;">
+            <div class="recipe-card-hit" onclick="showRecipeDetail(${recipe.id})">
                 ${imageHTML}
                 <h3>${recipe.titre}</h3>
                 <div class="recipe-meta">
